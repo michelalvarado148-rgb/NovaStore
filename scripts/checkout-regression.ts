@@ -87,6 +87,15 @@ async function main() {
   ).run(cartId, product.id, QUANTITY, nowIso());
 
   const stockBefore = product.stock;
+
+  // Precio efectivo del carrito (incluye ofertas activas), la misma fuente que usa placeOrder.
+  const expectedCart = buildCartDetail(cartId);
+  const expectedUnit = expectedCart.lines[0]?.unit_price_cents ?? product.price_cents;
+  const expectedTotal = expectedUnit * QUANTITY;
+  console.log(
+    `INFO  producto "${product.name}": precio lista ${product.price_cents} → efectivo ${expectedUnit}`,
+  );
+
   const proof = {
     fileName: 'comprobante.png',
     mimeType: 'image/png',
