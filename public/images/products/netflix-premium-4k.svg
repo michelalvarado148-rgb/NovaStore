@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400" role="img" aria-label="App Pro">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400" role="img" aria-label="Netflix Premium 4K">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#5b21b6"/>
+      <stop offset="0%" stop-color="#8b5cf6"/>
       <stop offset="55%" stop-color="#140d24"/>
       <stop offset="100%" stop-color="#120a1f"/>
     </linearGradient>
@@ -22,9 +22,9 @@
   <ellipse cx="320" cy="150" rx="230" ry="150" fill="url(#glow)"/>
   <circle cx="320" cy="170" r="96" fill="#0b0813" fill-opacity="0.55" stroke="#a855f7" stroke-opacity="0.55" stroke-width="2"/>
   <g transform="translate(268 118) scale(4.3)" fill="none" stroke="url(#stroke)" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>
+    <path d="M8 5.5v13l10-6.5-10-6.5Z"/><rect x="3" y="3" width="18" height="18" rx="4"/>
   </g>
-  <text x="320" y="316" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" fill="#f6f2ff">App Pro</text>
+  <text x="320" y="316" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" fill="#f6f2ff">Netflix Premium 4K</text>
   <text x="320" y="348" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" letter-spacing="4" fill="#c084fc">NOVASTORE</text>
   <rect x="16" y="16" width="608" height="368" rx="22" fill="none" stroke="#a855f7" stroke-opacity="0.28" stroke-width="2"/>
 </svg>
