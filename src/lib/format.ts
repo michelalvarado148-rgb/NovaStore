@@ -8,9 +8,19 @@ export function formatPEN(cents: number): string {
   }).format(cents / 100);
 }
 
-export function centsFromInput(value: string | number | null | undefined): number {
+export function centsFromInput(value: unknown): number {
   if (value === null || value === undefined || value === '') return 0;
-  const normalized = String(value).replace(',', '.').replace(/[^\d.]/g, '');
+  const raw = typeof value === 'number' ? String(value) : String(value);
+  const n = Number.parseFloat(raw.replace(/[^\d.,-]/g, '').replace(',', '.'));
+  if (!Number.isFinite(n)) return 0;
+  return Math.round(n * 100);
+}
+
+/** Convierte centavos a texto editable en soles: 2590 -> "25.90" */
+export function centsToInput(cents: number | null | undefined): string {
+  if (cents === null || cents === undefined) return '';
+  return (cents / 100).toFixed(2);
+}ormalized = String(value).replace(',', '.').replace(/[^\d.]/g, '');
   const parsed = Number.parseFloat(normalized);
   if (!Number.isFinite(parsed) || parsed < 0) return 0;
   return Math.round(parsed * 100);

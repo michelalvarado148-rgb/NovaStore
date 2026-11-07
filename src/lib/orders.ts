@@ -390,6 +390,7 @@ export type UpdateOrderInput = {
   paymentStatus?: PaymentStatus;
   adminNote?: string;
   adminId: number;
+  restoreStock?: boolean;
 };
 
 export function updateOrder(input: UpdateOrderInput): { ok: true } | { ok: false; error: string } {
@@ -430,8 +431,13 @@ export function updateOrder(input: UpdateOrderInput): { ok: true } | { ok: false
 
     const wasClosed = order.status === 'rechazado' || order.status === 'cancelado';
     const isClosed = nextStatus === 'rechazado' || nextStatus === 'cancelado';
-    if (!wasClosed && isClosed) {
-      restoreStockForOrder(order.id);
+    if (input.restoreStock || (!wasClosed && isClosed)) {
+      const alreadyRestored = db
+        .prepare('SELECT 1 FROM balance_movements WHERE order_id = ? AND type = ?')
+        .get(order.id, 'ajuste');
+      if (!alreadyRestored) {
+        restoreStockForOrder(order.id);
+      }
     }
 
     const paidWithBalance = order.payment_method === 'saldo';

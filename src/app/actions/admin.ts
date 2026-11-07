@@ -202,12 +202,12 @@ export async function updateOrderAction(formData: FormData) {
 }
 
 export async function restoreStockAction(formData: FormData) {
-  const admin = await requireAdmin('/admin/pedidos');
-  void admin;
+  await requireAdmin('/admin/pedidos');
   const orderId = Number(formData.get('order_id') ?? 0);
-  const result = restoreStockForOrder(orderId);
+  if (!orderId) back('/admin/pedidos', 'Pedido inválido.');
+  restoreStockForOrder(orderId);
   revalidatePath(`/admin/pedidos/${orderId}`);
-  if (!result.ok) back(`/admin/pedidos/${orderId}`, result.error);
+  revalidatePath('/admin/productos');
   redirect(`/admin/pedidos/${orderId}?ok=${encodeURIComponent('Stock restaurado.')}`);
 }
 

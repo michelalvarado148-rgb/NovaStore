@@ -80,10 +80,10 @@ export async function requireUser(nextPath = '/'): Promise<SessionUser> {
   return user;
 }
 
-export async function requireAdmin(): Promise<SessionUser> {
+export async function requireAdmin(nextPath = '/admin'): Promise<SessionUser> {
   const user = await getCurrentUser();
   if (!user) {
-    redirect('/login?next=/admin');
+    redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
   if (user.role !== 'admin') {
     redirect('/cuenta');

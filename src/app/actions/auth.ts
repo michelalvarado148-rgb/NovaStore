@@ -60,7 +60,10 @@ export async function registerAction(formData: FormData) {
   if (password !== confirm) back('Las contraseñas no coinciden.');
 
   const result = registerCustomer({ name, email, password, phone });
-  if (!result.ok) back(result.error);
+  if (result.ok === false) {
+    back(result.error);
+    return;
+  }
 
   // El rol siempre es 'customer': un cliente no puede autoasignarse privilegios.
   getDb()
