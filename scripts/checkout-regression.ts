@@ -176,9 +176,9 @@ async function main() {
     order?.contact_email,
   );
   check(
-    'el total coincide con el precio del carrito',
-    order?.total_cents === product.price_cents * QUANTITY,
-    `${order?.total_cents} vs ${product.price_cents * QUANTITY}`,
+    'el total coincide con el precio efectivo del carrito',
+    order?.total_cents === expectedTotal,
+    `${order?.total_cents} vs ${expectedTotal}`,
   );
 
   const items = db
