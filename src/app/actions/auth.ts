@@ -5,8 +5,8 @@ import { revalidatePath } from 'next/cache';
 import {
   authenticate,
   clearLoginAttempts,
+  checkLoginRate,
   createSession,
-  loginBlocked,
   registerCustomer,
   registerFailedLogin,
   safeNextPath,
@@ -26,8 +26,9 @@ export async function loginAction(formData: FormData) {
   if (!email || !password) {
     loginError('Ingresa tu correo y contraseña.', next);
   }
-  if (loginBlocked(email)) {
-    loginError('Demasiados intentos fallidos. Espera unos minutos e intenta otra vez.', next);
+  const blocked = checkLoginRate(email);
+  if (blocked) {
+    loginError(blocked, next);
   }
 
   const result = authenticate(email, password);
