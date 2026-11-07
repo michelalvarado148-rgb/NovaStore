@@ -246,8 +246,8 @@ async function main() {
     userId: buyerId,
     paymentMethod: 'yape',
     contactEmail: 'comprador@novastore.pe',
-    contactPhone: null,
-    customerNote: null,
+    contactPhone: '',
+    customerNote: undefined,
     idempotencyKey: 'admin-reg-method-off',
     proof: { fileName: 'p.png', mimeType: 'image/png', size: 3, data: Buffer.from('abc') },
   });
@@ -303,8 +303,8 @@ async function main() {
     userId: buyerId,
     paymentMethod: 'saldo',
     contactEmail: 'comprador@novastore.pe',
-    contactPhone: null,
-    customerNote: null,
+    contactPhone: '',
+    customerNote: undefined,
     idempotencyKey: 'admin-reg-saldo',
     proof: null,
   });
@@ -352,8 +352,8 @@ async function main() {
     userId: buyerId,
     paymentMethod: 'yape',
     contactEmail: 'comprador@novastore.pe',
-    contactPhone: null,
-    customerNote: null,
+    contactPhone: '',
+    customerNote: undefined,
     idempotencyKey: 'admin-reg-rechazo',
     proof: { fileName: 'pago.png', mimeType: 'image/png', size: 4, data: Buffer.from('abcd') },
   });
