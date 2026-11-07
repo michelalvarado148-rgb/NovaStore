@@ -716,27 +716,75 @@ function seed(db: Db) {
   seedAdmin(db);
 }
 
-function seedAdmin(db: Db) {
-  const adminExists = db
-    .prepare("SELECT COUNT(*) AS total FROM users WHERE role = 'admin'")
-    .get() as { total: number };
+/**
+ * Crea el administrador o lo sincroniza con ADMIN_EMAIL / ADMIN_PASSWORD.
+ *
+ * Reglas, en este orden:
+ *  1. Si ADMIN_PASSWORD está definido, las variables de entorno son la fuente de
+ *     verdad: se crea el administrador o se actualizan su correo y contraseña.
+ *     Así el acceso al panel no depende de lo que quedó guardado en una base
+ *     anterior (la base SQLite vive en el contenedor y se recrea al desplegar).
+ *  2. Si no hay variables de entorno y no existe administrador, se crea con el
+ *     valor por defecto del código; el panel avisa de que hay que cambiarlo.
+ *  3. Si ya existe un administrador y no hay variables de entorno, su contraseña
+ *     no se toca: puede haberla cambiado el propio dueño de la tienda.
+ *
+ * Nunca escribe la contraseña en el registro; solo deja constancia de qué regla
+ * se aplicó, para poder diagnosticar el acceso al panel desde los logs.
+ */
+function ensureAdmin(db: Db) {
+  const envEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  const envPassword = process.env.ADMIN_PASSWORD || '';
+  const email = envEmail || 'admin@novastore.pe';
+  const now = nowIso();
 
-  if (adminExists.total > 0) return;
+  const existing = db
+    .prepare("SELECT id, email, password_hash FROM users WHERE role = 'admin' ORDER BY id LIMIT 1")
+    .get() as { id: number; email: string; password_hash: string } | undefined;
 
-  const email = (process.env.ADMIN_EMAIL || 'admin@novastore.pe').trim().toLowerCase();
-  const password = process.env.ADMIN_PASSWORD || 'NovaStore2026!';
-  const passwordHash = hashPassword(password);
+  if (!existing) {
+    db.prepare(
+      `INSERT INTO users (name, email, password_hash, phone, role, balance_cents, is_active, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'admin', 0, 1, ?, ?)`,
+    ).run(
+      'Administrador NOVASTORE',
+      email,
+      hashPassword(envPassword || DEFAULT_ADMIN_PASSWORD),
+      (process.env.ADMIN_PHONE || '').trim() || null,
+      now,
+      now,
+    );
+    console.log(
+      `[novastore] administrador creado (${email}); contraseña: ${
+        envPassword ? 'definida en ADMIN_PASSWORD' : 'valor por defecto del código'
+      }`,
+    );
+    return;
+  }
 
-  db.prepare(
-    `INSERT INTO users (name, email, password_hash, phone, role, balance_cents, is_active, created_at, updated_at)
-     VALUES (?, ?, ?, ?, 'admin', 0, 1, ?, ?)`,
-  ).run(
-    'Administrador NOVASTORE',
-    email,
-    passwordHash,
-    process.env.ADMIN_PHONE || null,
-    nowIso(),
-    nowIso(),
+  if (envPassword) {
+    // Un correo que ya pertenece a otra cuenta impediría el UPDATE (email UNIQUE).
+    const taken = db
+      .prepare('SELECT id FROM users WHERE email = ? AND id <> ?')
+      .get(email, existing.id) as { id: number } | undefined;
+    const targetEmail = taken ? existing.email : email;
+
+    db.prepare(
+      "UPDATE users SET email = ?, password_hash = ?, role = 'admin', is_active = 1, updated_at = ? WHERE id = ?",
+    ).run(targetEmail, hashPassword(envPassword), now, existing.id);
+
+    console.log(
+      `[novastore] administrador sincronizado con las variables de entorno (${targetEmail})` +
+        (taken ? `; ${email} ya pertenece a otra cuenta, se conservó el correo anterior` : ''),
+    );
+    return;
+  }
+
+  const keepsDefault = verifyPassword(DEFAULT_ADMIN_PASSWORD, existing.password_hash);
+  console.log(
+    `[novastore] administrador existente (${existing.email}); contraseña por defecto vigente: ${
+      keepsDefault ? 'sí' : 'no'
+    }`,
   );
 }
 
