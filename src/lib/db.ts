@@ -8,6 +8,12 @@ export type Db = Database.Database;
 const DB_PATH =
   process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'novastore.db');
 
+/**
+ * Contraseña del administrador cuando no se define ADMIN_PASSWORD.
+ * Vive aquí para que el sembrado y el aviso del panel usen el mismo valor.
+ */
+export const DEFAULT_ADMIN_PASSWORD = 'NovaStore2026!';
+
 const SCHEMA = `
 PRAGMA journal_mode = WAL;
 PRAGMA foreign_keys = ON;
@@ -713,7 +719,7 @@ function seed(db: Db) {
     }
   }
 
-  seedAdmin(db);
+  ensureAdmin(db);
 }
 
 /**
