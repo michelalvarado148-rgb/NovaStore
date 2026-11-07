@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { getDb, nowIso } from './db';
-import { buildCartDetail, clearCart, readCartId } from './cart';
+import { buildCartDetail } from './cart';
 import { getActiveOffers, getPaymentMethods, getSetting } from './catalog';
 import { maskName } from './format';
 
@@ -103,14 +103,10 @@ export function placeOrder(input: PlaceOrderInput): PlaceOrderResult {
     return { ok: false, error: 'Selecciona un método de pago válido.' };
   }
 
-  const cart = buildCartDetail(
-    db.prepare('SELECT id FROM carts WHERE user_id = ?').get(input.userId) as number | null
-      ? ((
-          db.prepare('SELECT id FROM carts WHERE user_id = ?').get(input.userId) as { id: number }
-        ).id)
-      : null,
-    getActiveOffers(),
-  );
+  const cartRow = db.prepare('SELECT id FROM carts WHERE user_id = ?').get(input.userId) as
+    | { id: number }
+    | undefined;
+  const cart = buildCartDetail(cartRow?.id ?? null, getActiveOffers());
 
   if (!cart.cartId || cart.lines.length === 0) {
     return { ok: false, error: 'Tu carrito está vacío.' };
