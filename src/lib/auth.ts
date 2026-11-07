@@ -143,31 +143,55 @@ export async function destroySession(): Promise<void> {
 
 /* --------------------------- Rate limiting --------------------------- */
 
-type Attempt = { count: number; blockedUntil: number };
-const attempts = new Map<string, Attempt>();
+export const MAX_LOGIN_ATTEMPTS = 5;
+const LOGIN_BLOCK_MS = 5 * 60 * 1000;
 
+/**
+ * Los intentos fallidos se guardan en SQLite y no en memoria: así el bloqueo
+ * sobrevive a un reinicio o redespliegue del contenedor, en lugar de reiniciarse
+ * solo con volver a arrancar el proceso.
+ */
 export function checkLoginRate(key: string): string | null {
-  const entry = attempts.get(key);
-  if (!entry) return null;
-  if (entry.blockedUntil > Date.now()) {
-    const seconds = Math.ceil((entry.blockedUntil - Date.now()) / 1000);
-    return `Demasiados intentos fallidos. Intenta nuevamente en ${seconds} segundos.`;
-  }
-  return null;
+  const row = getDb()
+    .prepare('SELECT blocked_until FROM login_attempts WHERE key = ?')
+    .get(key) as { blocked_until: string | null } | undefined;
+
+  const until = row?.blocked_until ? Date.parse(row.blocked_until) : NaN;
+  if (!Number.isFinite(until) || until <= Date.now()) return null;
+
+  const seconds = Math.ceil((until - Date.now()) / 1000);
+  return `Demasiados intentos fallidos. Intenta nuevamente en ${seconds} segundos.`;
 }
 
 export function registerFailedLogin(key: string): void {
-  const entry = attempts.get(key) ?? { count: 0, blockedUntil: 0 };
-  entry.count += 1;
-  if (entry.count >= 5) {
-    entry.blockedUntil = Date.now() + 5 * 60 * 1000;
-    entry.count = 0;
-  }
-  attempts.set(key, entry);
+  const db = getDb();
+  const row = db
+    .prepare('SELECT count, blocked_until FROM login_attempts WHERE key = ?')
+    .get(key) as { count: number; blocked_until: string | null } | undefined;
+
+  const until = row?.blocked_until ? Date.parse(row.blocked_until) : NaN;
+
+  // Con un bloqueo vigente no se acumulan más fallos.
+  if (Number.isFinite(until) && until > Date.now()) return;
+
+  // Un bloqueo ya vencido reinicia el contador.
+  const previous = Number.isFinite(until) ? 0 : (row?.count ?? 0);
+  const count = previous + 1;
+  const blockedUntil =
+    count >= MAX_LOGIN_ATTEMPTS ? new Date(Date.now() + LOGIN_BLOCK_MS).toISOString() : null;
+
+  db.prepare(
+    `INSERT INTO login_attempts (key, count, blocked_until, updated_at)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(key) DO UPDATE SET
+       count = excluded.count,
+       blocked_until = excluded.blocked_until,
+       updated_at = excluded.updated_at`,
+  ).run(key, blockedUntil ? 0 : count, blockedUntil, nowIso());
 }
 
 export function clearLoginAttempts(key: string): void {
-  attempts.delete(key);
+  getDb().prepare('DELETE FROM login_attempts WHERE key = ?').run(key);
 }
 
 /* ----------------------------- Registration -------------------------- */

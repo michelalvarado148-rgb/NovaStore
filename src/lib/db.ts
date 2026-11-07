@@ -34,6 +34,13 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 
+CREATE TABLE IF NOT EXISTS login_attempts (
+  key TEXT PRIMARY KEY,
+  count INTEGER NOT NULL DEFAULT 0,
+  blocked_until TEXT,
+  updated_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS categories (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL UNIQUE,
