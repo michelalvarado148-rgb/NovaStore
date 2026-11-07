@@ -36,6 +36,7 @@ async function main() {
 
   const { getDb, nowIso } = await import('../src/lib/db');
   const { placeOrder } = await import('../src/lib/orders');
+  const { buildCartDetail } = await import('../src/lib/cart');
 
   const db = getDb();
 
