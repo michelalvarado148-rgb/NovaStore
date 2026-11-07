@@ -3,20 +3,12 @@ import path from 'node:path';
 
 /**
  * Genera las imágenes SVG propias de NOVASTORE (categorías y productos).
- * Sin marcas externas, sin marcas de agua: arte original con la identidad negro/morado.
+ * Sin marcas externas ni marcas de agua: arte original con la identidad negro/morado.
  */
 
 const OUT_DIR = path.join(process.cwd(), 'public', 'images');
 
-type Art = {
-  file: string;
-  title: string;
-  subtitle: string;
-  hue: [string, string];
-  icon: string;
-};
-
-const ICONS: Record<string, string> = {
+const ICONS = {
   game: '<path d="M8 10h3M9.5 8.5v3M15 9.5h.01M17 11.5h.01M7 6h10a4 4 0 0 1 3.9 4.9l-.8 4A3 3 0 0 1 16 16l-1.2-1.4h-5.6L8 16a3 3 0 0 1-4.1-1.1l-.8-4A4 4 0 0 1 7 6Z"/>',
   play: '<path d="M8 5.5v13l10-6.5-10-6.5Z"/><rect x="3" y="3" width="18" height="18" rx="4"/>',
   app: '<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>',
@@ -29,7 +21,7 @@ const ICONS: Record<string, string> = {
   gift: '<rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 13h18M12 9v11M12 9C10 9 8 7.8 8 6.2A2.2 2.2 0 0 1 12 5a2.2 2.2 0 0 1 4 1.2C16 7.8 14 9 12 9Z"/>',
 };
 
-function art({ file, title, subtitle, hue, icon }: Art) {
+function art({ file, title, subtitle, hue, icon }) {
   const [c1, c2] = hue;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400" role="img" aria-label="${title}">
   <defs>
@@ -65,7 +57,7 @@ function art({ file, title, subtitle, hue, icon }: Art) {
   return file;
 }
 
-const categories: Art[] = [
+const categories = [
   { file: 'cat-juegos.svg', title: 'Juegos', subtitle: 'GAME CARDS', hue: ['#3b0a63', '#0a0714'], icon: 'game' },
   { file: 'cat-streaming.svg', title: 'Streaming', subtitle: 'SUSCRIPCIONES', hue: ['#4a0f6b', '#0a0714'], icon: 'play' },
   { file: 'cat-aplicaciones.svg', title: 'Aplicaciones', subtitle: 'LICENCIAS', hue: ['#2a0b57', '#0a0714'], icon: 'app' },
@@ -74,7 +66,7 @@ const categories: Art[] = [
   { file: 'cat-otros.svg', title: 'Otros digitales', subtitle: 'EXTRAS', hue: ['#450f63', '#0a0714'], icon: 'other' },
 ];
 
-const products: Art[] = [
+const products = [
   { file: 'prod-giftcard-juego.svg', title: 'Gift Card Gaming', subtitle: 'NOVASTORE', hue: ['#4c1d95', '#120a1f'], icon: 'game' },
   { file: 'prod-streaming-premium.svg', title: 'Streaming Premium', subtitle: 'NOVASTORE', hue: ['#6d28d9', '#120a1f'], icon: 'play' },
   { file: 'prod-app-pro.svg', title: 'App Pro', subtitle: 'NOVASTORE', hue: ['#5b21b6', '#120a1f'], icon: 'app' },
