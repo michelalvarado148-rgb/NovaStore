@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "images": "node scripts/generate-images.mjs",
     "smoke": "node scripts/smoke-test.mjs",
-    "test:checkout": "tsx scripts/checkout-regression.ts"
+    "test:checkout": "tsx scripts/checkout-regression.ts",
+    "test:admin": "tsx scripts/admin-regression.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",
