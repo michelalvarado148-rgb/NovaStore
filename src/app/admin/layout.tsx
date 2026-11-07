@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { requireAdmin } from '@/lib/auth';
+import { adminUsesDefaultPassword, requireAdmin } from '@/lib/auth';
 import { logoutAction } from '@/app/actions/session';
 
 const NAV = [
@@ -17,6 +17,7 @@ const NAV = [
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const admin = await requireAdmin('/admin');
+  const usingDefaultPassword = adminUsesDefaultPassword(admin.id);
 
   return (
     <div className="shell py-6">
