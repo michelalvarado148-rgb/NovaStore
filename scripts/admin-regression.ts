@@ -433,15 +433,51 @@ async function main() {
   /* 11. Eliminación en el catálogo                                  */
   /* -------------------------------------------------------------- */
 
-  const deletedProduct = admin.deleteProduct(productId);
-  check('elimina el producto', deletedProduct.ok === true, JSON.stringify(deletedProduct));
+  // Producto con pedidos: no se borra, se desactiva para conservar el historial.
+  const deleteOrdered = admin.deleteProduct(productId);
+  check('no borra un producto con pedidos', deleteOrdered.ok === false, JSON.stringify(deleteOrdered));
+  const orderedActive = (
+    db.prepare('SELECT is_active FROM products WHERE id = ?').get(productId) as { is_active: number }
+  ).is_active;
+  check('el producto con pedidos queda desactivado', orderedActive === 0, String(orderedActive));
+
+  // Producto sin pedidos: se elimina de verdad.
+  const disposable = admin.saveProduct({
+    name: 'Producto Desechable',
+    description: '',
+    categoryId: null,
+    imageUrl: null,
+    priceCents: 500,
+    comparePriceCents: null,
+    stock: 1,
+    isActive: true,
+    isFeatured: false,
+    variants: [],
+  });
+  const disposableId = disposable.ok ? disposable.id : 0;
+  const deletedProduct = admin.deleteProduct(disposableId);
+  check('elimina un producto sin pedidos', deletedProduct.ok === true, JSON.stringify(deletedProduct));
   check(
     'el producto desaparece del catálogo',
-    !admin.listAdminProducts().some((p) => p.id === productId),
+    !admin.listAdminProducts().some((p) => p.id === disposableId),
   );
 
-  const deletedCategory = admin.deleteCategory(categoryId);
-  check('elimina la categoría', deletedCategory.ok === true, JSON.stringify(deletedCategory));
+  // Categoría con productos: se protege.
+  const deleteFilledCategory = admin.deleteCategory(categoryId);
+  check('no borra una categoría con productos', deleteFilledCategory.ok === false, JSON.stringify(deleteFilledCategory));
+
+  // Categoría vacía: se elimina.
+  const emptyCat = admin.saveCategory({
+    name: 'Categoría Vacía',
+    description: '',
+    imageUrl: null,
+    position: 101,
+    isActive: true,
+  });
+  const emptyCatId = emptyCat.ok ? emptyCat.id : 0;
+  const deletedCategory = admin.deleteCategory(emptyCatId);
+  check('elimina una categoría vacía', deletedCategory.ok === true, JSON.stringify(deletedCategory));
+  check('la categoría vacía desaparece', !db.prepare('SELECT 1 FROM categories WHERE id = ?').get(emptyCatId));
 
   /* -------------------------------------------------------------- */
 
