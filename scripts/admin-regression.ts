@@ -66,8 +66,12 @@ async function main() {
   }
 
   function addItem(cartId: number, productId: number, quantity: number) {
+    // El carrito real fusiona cantidades (índice único cart+producto+variante),
+    // así que aquí se replica con un upsert en lugar de un INSERT simple.
     db.prepare(
-      'INSERT INTO cart_items (cart_id, product_id, variant_id, quantity, created_at) VALUES (?, ?, NULL, ?, ?)',
+      `INSERT INTO cart_items (cart_id, product_id, variant_id, quantity, created_at)
+       VALUES (?, ?, NULL, ?, ?)
+       ON CONFLICT DO UPDATE SET quantity = excluded.quantity`,
     ).run(cartId, productId, quantity, nowIso());
   }
 
