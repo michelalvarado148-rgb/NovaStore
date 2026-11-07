@@ -1,7 +1,10 @@
 # ---------- Etapa 1: dependencias ----------
 FROM node:24-bookworm-slim AS deps
 WORKDIR /app
-RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends python3 make g++ ca-certificates \
+  && apt-get upgrade -y \
+  && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev --no-audit --no-fund && npm cache clean --force
 
