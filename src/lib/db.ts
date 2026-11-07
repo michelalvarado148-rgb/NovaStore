@@ -721,9 +721,16 @@ function seedAdmin(db: Db) {
   const passwordHash = hashPassword(password);
 
   db.prepare(
-    `INSERT INTO users (name, email, password_hash, phone, role, balance_cents, is_active, created_at)
-     VALUES (?, ?, ?, ?, 'admin', 0, 1, ?)`,
-  ).run('Administrador NOVASTORE', email, passwordHash, process.env.ADMIN_PHONE || null, nowIso());
+    `INSERT INTO users (name, email, password_hash, phone, role, balance_cents, is_active, created_at, updated_at)
+     VALUES (?, ?, ?, ?, 'admin', 0, 1, ?, ?)`,
+  ).run(
+    'Administrador NOVASTORE',
+    email,
+    passwordHash,
+    process.env.ADMIN_PHONE || null,
+    nowIso(),
+    nowIso(),
+  );
 }
 
 /* ------------------------------------------------------------------ */
