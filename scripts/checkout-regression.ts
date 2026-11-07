@@ -193,13 +193,13 @@ async function main() {
   }[];
   check('registra una línea de pedido', items.length === 1, `líneas: ${items.length}`);
   check(
-    'la línea guarda cantidad y precio unitario',
-    items[0]?.quantity === QUANTITY && items[0]?.unit_price_cents === product.price_cents,
+    'la línea guarda cantidad y precio unitario efectivo',
+    items[0]?.quantity === QUANTITY && items[0]?.unit_price_cents === expectedUnit,
     JSON.stringify(items[0]),
   );
   check(
     'la línea calcula su total',
-    items[0]?.line_total_cents === product.price_cents * QUANTITY,
+    items[0]?.line_total_cents === expectedUnit * QUANTITY,
     String(items[0]?.line_total_cents),
   );
 
