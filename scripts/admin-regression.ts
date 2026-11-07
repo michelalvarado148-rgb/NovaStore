@@ -427,7 +427,7 @@ async function main() {
   check('la cuenta queda inactiva', strangerActive === 0, String(strangerActive));
 
   const stats = orders.getDashboardStats();
-  check('el resumen de ventas cuenta los pedidos', stats.orders_total >= 2, JSON.stringify(stats));
+  check('el resumen de ventas cuenta los pedidos', stats.ordersTotal >= 2, JSON.stringify(stats));
 
   /* -------------------------------------------------------------- */
   /* 11. Eliminación en el catálogo                                  */
