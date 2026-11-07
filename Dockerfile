@@ -1,5 +1,5 @@
 # ---------- Etapa 1: dependencias ----------
-FROM node:24-bookworm-slim AS deps
+FROM node:24-trixie-slim AS deps
 WORKDIR /app
 RUN apt-get update \
   && apt-get install -y --no-install-recommends python3 make g++ ca-certificates \
@@ -9,7 +9,7 @@ COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev --no-audit --no-fund && npm cache clean --force
 
 # ---------- Etapa 2: build ----------
-FROM node:24-bookworm-slim AS builder
+FROM node:24-trixie-slim AS builder
 WORKDIR /app
 RUN apt-get update \
   && apt-get install -y --no-install-recommends python3 make g++ ca-certificates \
@@ -24,7 +24,7 @@ ENV NODE_ENV=production
 RUN npm run build
 
 # ---------- Etapa 3: ejecución ----------
-FROM node:24-bookworm-slim AS runner
+FROM node:24-trixie-slim AS runner
 WORKDIR /app
 RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/* \
   && groupadd -g 1001 nodejs && useradd -u 1001 -g nodejs -m nextjs
