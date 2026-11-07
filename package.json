@@ -12,7 +12,8 @@
     "smoke": "node scripts/smoke-test.mjs",
     "test:checkout": "tsx scripts/checkout-regression.ts",
     "test:admin": "tsx scripts/admin-regression.ts",
-    "test:security": "tsx scripts/security-regression.ts"
+    "test:security": "tsx scripts/security-regression.ts",
+    "test:bootstrap": "tsx scripts/admin-bootstrap-regression.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",
