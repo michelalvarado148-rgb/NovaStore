@@ -738,7 +738,7 @@ function seed(db: Db) {
  * Nunca escribe la contraseña en el registro; solo deja constancia de qué regla
  * se aplicó, para poder diagnosticar el acceso al panel desde los logs.
  */
-function ensureAdmin(db: Db) {
+export function ensureAdmin(db: Db) {
   const envEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
   const envPassword = process.env.ADMIN_PASSWORD || '';
   const email = envEmail || 'admin@novastore.pe';

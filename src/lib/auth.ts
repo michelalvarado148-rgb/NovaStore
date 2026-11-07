@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import {
+  DEFAULT_ADMIN_PASSWORD,
   getDb,
   hashPassword,
   hashToken,
@@ -93,10 +94,10 @@ export async function requireAdmin(nextPath = '/admin'): Promise<SessionUser> {
 
 /**
  * Contraseña que se usa al sembrar el administrador cuando no hay
- * ADMIN_PASSWORD configurado. Vive aquí para poder detectar si la cuenta
- * sigue usando ese valor conocido.
+ * ADMIN_PASSWORD configurado. Se define en db.ts, junto al sembrado, y se
+ * reexporta aquí para que el aviso del panel use exactamente el mismo valor.
  */
-export const DEFAULT_ADMIN_PASSWORD = 'NovaStore2026!';
+export { DEFAULT_ADMIN_PASSWORD };
 
 /**
  * Indica si la cuenta de administrador todavía conserva la contraseña por
