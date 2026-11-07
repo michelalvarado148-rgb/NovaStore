@@ -1,0 +1,2 @@
+# NovaStore
+Una tienda virtual.
