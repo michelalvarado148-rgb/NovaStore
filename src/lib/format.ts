@@ -20,10 +20,6 @@ export function centsFromInput(value: unknown): number {
 export function centsToInput(cents: number | null | undefined): string {
   if (cents === null || cents === undefined) return '';
   return (cents / 100).toFixed(2);
-}ormalized = String(value).replace(',', '.').replace(/[^\d.]/g, '');
-  const parsed = Number.parseFloat(normalized);
-  if (!Number.isFinite(parsed) || parsed < 0) return 0;
-  return Math.round(parsed * 100);
 }
 
 export function formatDate(iso: string | null | undefined): string {
