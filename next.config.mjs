@@ -1,0 +1,13 @@
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  serverExternalPackages: ['better-sqlite3'],
+  eslint: { ignoreDuringBuilds: true },
+  poweredByHeader: false,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '8mb',
+    },
+  },
+};
+
+export default nextConfig;
