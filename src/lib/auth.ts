@@ -91,6 +91,28 @@ export async function requireAdmin(nextPath = '/admin'): Promise<SessionUser> {
   return user;
 }
 
+/**
+ * Contraseña que se usa al sembrar el administrador cuando no hay
+ * ADMIN_PASSWORD configurado. Vive aquí para poder detectar si la cuenta
+ * sigue usando ese valor conocido.
+ */
+export const DEFAULT_ADMIN_PASSWORD = 'NovaStore2026!';
+
+/**
+ * Indica si la cuenta de administrador todavía conserva la contraseña por
+ * defecto. Se comprueba contra el hash guardado (no contra las variables de
+ * entorno) para detectar también el caso en que ADMIN_PASSWORD se definió
+ * después de crear la cuenta y por tanto nunca llegó a aplicarse.
+ */
+export function adminUsesDefaultPassword(userId: number): boolean {
+  const db = getDb();
+  const row = db
+    .prepare("SELECT password_hash FROM users WHERE id = ? AND role = 'admin'")
+    .get(userId) as { password_hash: string } | undefined;
+  if (!row) return false;
+  return verifyPassword(DEFAULT_ADMIN_PASSWORD, row.password_hash);
+}
+
 export async function createSession(userId: number, userAgent?: string | null): Promise<void> {
   const db = getDb();
   const token = newToken();
