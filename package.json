@@ -11,7 +11,8 @@
     "images": "node scripts/generate-images.mjs",
     "smoke": "node scripts/smoke-test.mjs",
     "test:checkout": "tsx scripts/checkout-regression.ts",
-    "test:admin": "tsx scripts/admin-regression.ts"
+    "test:admin": "tsx scripts/admin-regression.ts",
+    "test:security": "tsx scripts/security-regression.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",
