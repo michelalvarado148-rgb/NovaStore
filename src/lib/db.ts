@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS users (
   role TEXT NOT NULL DEFAULT 'customer' CHECK (role IN ('customer', 'admin')),
   balance_cents INTEGER NOT NULL DEFAULT 0 CHECK (balance_cents >= 0),
   is_active INTEGER NOT NULL DEFAULT 1,
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
