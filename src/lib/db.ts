@@ -200,8 +200,18 @@ function openDb(): Db {
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   db.exec(SCHEMA);
+  migrate(db);
   seed(db);
   return db;
+}
+
+/** Ajustes para bases de datos creadas con versiones anteriores del esquema. */
+function migrate(db: Db) {
+  const columns = db.prepare('PRAGMA table_info(users)').all() as { name: string }[];
+  if (!columns.some((column) => column.name === 'updated_at')) {
+    db.exec("ALTER TABLE users ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''");
+  }
+  db.exec("UPDATE users SET updated_at = created_at WHERE updated_at = '' OR updated_at IS NULL");
 }
 
 declare global {
