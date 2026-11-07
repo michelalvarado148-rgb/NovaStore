@@ -36,6 +36,22 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
       </div>
 
+      {usingDefaultPassword ? (
+        <div className="mb-5 rounded-2xl border border-amber-400/40 bg-amber-500/10 p-4">
+          <p className="text-sm font-black text-amber-200">
+            Estás usando la contraseña de administrador por defecto
+          </p>
+          <p className="mt-1 text-sm text-amber-100/80">
+            Cualquier persona con acceso al código de la tienda puede entrar a este panel. Cambia la
+            contraseña ahora y define ADMIN_EMAIL y ADMIN_PASSWORD en las variables de entorno del
+            proyecto.
+          </p>
+          <Link href="/cuenta/perfil" className="btn btn-outline btn-sm mt-3">
+            Cambiar contraseña
+          </Link>
+        </div>
+      ) : null}
+
       <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
         <nav className="flex gap-2 overflow-x-auto pb-1 lg:sticky lg:top-4 lg:h-fit lg:flex-col lg:overflow-visible">
           {NAV.map((item) => (
