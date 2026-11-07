@@ -18,7 +18,6 @@ import {
   type VariantInput,
 } from '@/lib/admin';
 import { adjustBalance, restoreStockForOrder, updateOrder } from '@/lib/orders';
-import { getSetting } from '@/lib/catalog';
 
 function back(path: string, message: string, type: 'ok' | 'error' = 'error'): never {
   redirect(`${path}?${type}=${encodeURIComponent(message)}`);
@@ -183,8 +182,6 @@ export async function updateOrderAction(formData: FormData) {
   if (!result.ok) back(`/admin/pedidos/${orderId}`, result.error);
 
   if (creditBalance) {
-    const order = getSetting('__never__', '') ? null : null;
-    void order;
     const total = Number(formData.get('total_cents') ?? 0);
     const userId = Number(formData.get('user_id') ?? 0);
     if (userId && total > 0) {
