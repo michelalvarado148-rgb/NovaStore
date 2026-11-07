@@ -57,14 +57,14 @@ export default async function BalancePage() {
                   <th>Fecha</th>
                   <th>Motivo</th>
                   <th>Monto</th>
-                  <th>Saldo final</th>
+                  <th>Tipo</th>
                 </tr>
               </thead>
               <tbody>
                 {movements.map((movement) => (
                   <tr key={movement.id}>
                     <td className="text-xs text-slate-400">{formatDateTime(movement.created_at)}</td>
-                    <td className="text-sm text-slate-200">{movement.reason}</td>
+                    <td className="text-sm text-slate-200">{movement.description}</td>
                     <td
                       className={`font-bold ${
                         movement.amount_cents >= 0 ? 'text-emerald-300' : 'text-red-300'
@@ -73,7 +73,7 @@ export default async function BalancePage() {
                       {movement.amount_cents >= 0 ? '+' : ''}
                       {formatPEN(movement.amount_cents)}
                     </td>
-                    <td className="text-sm text-white">{formatPEN(movement.balance_after_cents)}</td>
+                    <td className="text-sm text-white">{movement.type}</td>
                   </tr>
                 ))}
               </tbody>

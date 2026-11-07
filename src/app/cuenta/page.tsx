@@ -114,7 +114,7 @@ export default async function AccountPage({
                   className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2"
                 >
                   <div>
-                    <p className="text-xs font-semibold text-white">{movement.reason}</p>
+                    <p className="text-xs font-semibold text-white">{movement.description}</p>
                     <p className="text-[0.65rem] text-slate-500">
                       {formatDateTime(movement.created_at)}
                     </p>

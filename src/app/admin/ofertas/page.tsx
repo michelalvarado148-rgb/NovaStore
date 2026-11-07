@@ -13,7 +13,7 @@ export default async function AdminOffersPage({
 }) {
   const params = await searchParams;
   const offers = listAdminOffers();
-  const categories = getCategories(false);
+  const categories = getCategories({ includeInactive: true });
   const products = getDb()
     .prepare('SELECT id, name FROM products ORDER BY name ASC')
     .all() as { id: number; name: string }[];

@@ -10,7 +10,7 @@ export default async function AdminCategoriesPage({
   searchParams: Promise<{ ok?: string; error?: string }>;
 }) {
   const params = await searchParams;
-  const categories = getCategories(false);
+  const categories = getCategories({ includeInactive: true });
 
   return (
     <div className="space-y-4">

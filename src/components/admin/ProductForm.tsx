@@ -13,7 +13,7 @@ export default function ProductForm({
   product?: AdminProduct;
   variants?: { id: number; name: string; price_cents: number | null; stock: number | null }[];
 }) {
-  const categories = getCategories(false);
+  const categories = getCategories({ includeInactive: true });
   const rows = Array.from({ length: Math.max(VARIANT_ROWS, variants.length) });
 
   return (
