@@ -184,10 +184,10 @@ export function registerCustomer(input: RegisterInput): RegisterResult {
 
   const info = db
     .prepare(
-      `INSERT INTO users (name, email, password_hash, phone, role, balance_cents, is_active, created_at)
-       VALUES (?, ?, ?, ?, 'customer', 0, 1, ?)`,
+      `INSERT INTO users (name, email, password_hash, phone, role, balance_cents, is_active, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'customer', 0, 1, ?, ?)`,
     )
-    .run(name, email, hashPassword(input.password), phone, nowIso());
+    .run(name, email, hashPassword(input.password), phone, nowIso(), nowIso());
 
   return { ok: true, userId: Number(info.lastInsertRowid) };
 }
