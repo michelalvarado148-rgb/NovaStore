@@ -7,6 +7,12 @@ import { requireUser } from '@/lib/auth';
 import { getCart } from '@/lib/cart';
 import { getPaymentMethods } from '@/lib/catalog';
 import { SALDO_METHOD, placeOrder, type ProofInput } from '@/lib/orders';
+import { getActiveNotices, saveOrderNoticeAnswers } from '@/lib/product-notice';
+import {
+  MAX_FIELD_VALUE,
+  type NoticeAnswerPayload,
+  type OrderNoticeAnswer,
+} from '@/lib/notice-meta';
 import { notifyAdminNewOrder, notifyAdminNewProof } from '@/lib/push';
 
 const MAX_PROOF_BYTES = 5 * 1024 * 1024;
@@ -65,6 +71,64 @@ export async function placeOrderAction(formData: FormData) {
     fail('Adjunta la imagen de tu comprobante de pago para continuar.');
   }
 
+  // Avisos y requisitos por producto: se validan aquí, en el servidor, antes de
+  // cobrar el saldo o registrar el pedido con un método externo.
+  const noticeMap = getActiveNotices(cart.lines.map((line) => line.product_id));
+  const noticeAnswers: OrderNoticeAnswer[] = [];
+  if (noticeMap.size > 0) {
+    let payload: NoticeAnswerPayload[] = [];
+    try {
+      const parsed = JSON.parse(String(formData.get('notice_answers') ?? '[]'));
+      if (Array.isArray(parsed)) payload = parsed as NoticeAnswerPayload[];
+    } catch {
+      payload = [];
+    }
+
+    const provided = new Map<number, Map<string, string>>();
+    for (const item of payload) {
+      const productId = Number(item?.productId);
+      if (!Number.isInteger(productId)) continue;
+      const values = new Map<string, string>();
+      for (const value of Array.isArray(item?.values) ? item.values : []) {
+        const label = String(value?.label ?? '').trim();
+        if (!label) continue;
+        values.set(label, String(value?.value ?? '').trim().slice(0, MAX_FIELD_VALUE));
+      }
+      provided.set(productId, values);
+    }
+
+    const names = new Map<number, string>();
+    for (const line of cart.lines) {
+      if (!names.has(line.product_id)) names.set(line.product_id, line.name);
+    }
+
+    for (const [productId, notice] of noticeMap) {
+      const productName = names.get(productId) ?? 'Producto';
+      const values = provided.get(productId);
+      if (!values) {
+        fail(`Debes leer y confirmar el aviso de "${productName}" antes de continuar.`);
+      }
+      const answers = notice.fields.map((field) => ({
+        label: field.label,
+        required: field.required,
+        value: (values.get(field.label) ?? '').slice(0, MAX_FIELD_VALUE),
+      }));
+      const missing = answers.find((answer) => answer.required && !answer.value);
+      if (missing) {
+        fail(`Completa el dato "${missing.label}" para "${productName}".`);
+      }
+      noticeAnswers.push({
+        productId,
+        productName,
+        type: notice.type,
+        message: notice.message,
+        deliveryTime: notice.deliveryTime,
+        values: answers,
+        acknowledgedAt: new Date().toISOString(),
+      });
+    }
+  }
+
   const result = placeOrder({
     userId: user.id,
     paymentMethod: method.code,
@@ -78,6 +142,11 @@ export async function placeOrderAction(formData: FormData) {
   revalidatePath('/', 'layout');
   if (!result.ok) {
     redirect(`/checkout?error=${encodeURIComponent(result.error)}`);
+  }
+
+  // Los avisos aceptados y los datos del cliente quedan guardados con el pedido.
+  if (!result.duplicated && noticeAnswers.length > 0) {
+    saveOrderNoticeAnswers(result.orderNumber, noticeAnswers);
   }
 
   // Aviso al teléfono del administrador. Un pedido repetido no vuelve a notificar
