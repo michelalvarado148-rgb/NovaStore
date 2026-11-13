@@ -10,7 +10,11 @@ export type Category = {
   position: number;
   is_active: number;
   created_at: string;
+  /** Categoría principal a la que pertenece (null = categoría principal). */
+  parent_id: number | null;
   product_count?: number;
+  /** Nivel dentro del árbol: 0 = principal, 1 = subcategoría. */
+  depth?: number;
 };
 
 export type Product = {
@@ -80,7 +84,7 @@ export function getSettings(): Record<string, string> {
   // sus payloads ni las claves privadas.
   const rows = getDb()
     .prepare(
-      "SELECT key, value FROM settings WHERE key NOT LIKE 'backup:%' AND key NOT LIKE 'media:%' AND key NOT LIKE 'push:%'",
+      "SELECT key, value FROM settings WHERE key NOT LIKE 'backup:%' AND key NOT LIKE 'media:%' AND key NOT LIKE 'push:%' AND key NOT LIKE 'cat_parent:%'",
     )
     .all() as {
     key: string;
@@ -118,12 +122,128 @@ export function getCategories(options?: { includeInactive?: boolean }): Category
         ORDER BY c.position ASC, c.name ASC`,
     )
     .all() as Category[];
+  return attachParents(rows);
+}
+
+/**
+ * La jerarquía de categorías se guarda en la tabla `settings` de Supabase
+ * (clave `cat_parent:<id>` → id de la categoría principal) porque la conexión
+ * de la tienda no tiene permisos para alterar la tabla `categories`.
+ * Esas claves se sincronizan con la base remota igual que el resto.
+ */
+export const CATEGORY_PARENT_PREFIX = 'cat_parent:';
+
+export function getCategoryParentMap(): Record<number, number> {
+  const rows = getDb()
+    .prepare("SELECT key, value FROM settings WHERE key LIKE 'cat_parent:%'")
+    .all() as { key: string; value: string }[];
+  const map: Record<number, number> = {};
+  for (const row of rows) {
+    const childId = Number(row.key.slice(CATEGORY_PARENT_PREFIX.length));
+    const parentId = Number(row.value);
+    if (
+      Number.isInteger(childId) &&
+      childId > 0 &&
+      Number.isInteger(parentId) &&
+      parentId > 0 &&
+      childId !== parentId
+    ) {
+      map[childId] = parentId;
+    }
+  }
+  return map;
+}
+
+function attachParents(rows: Category[]): Category[] {
+  const parents = getCategoryParentMap();
+  return rows.map((row) => ({ ...row, parent_id: parents[row.id] ?? null }));
+}
+
+export function setCategoryParent(categoryId: number, parentId: number | null): void {
+  if (parentId === null) {
+    clearCategoryParent(categoryId);
+    return;
+  }
+  setSetting(`${CATEGORY_PARENT_PREFIX}${categoryId}`, String(parentId));
+}
+
+export function clearCategoryParent(categoryId: number): void {
+  getDb()
+    .prepare('DELETE FROM settings WHERE key = ?')
+    .run(`${CATEGORY_PARENT_PREFIX}${categoryId}`);
+}
+
+/** Categorías principales (nivel 1). */
+export function getRootCategories(options?: { includeInactive?: boolean }): Category[] {
+  return getCategories(options).filter((category) => category.parent_id === null);
+}
+
+/** Subcategorías directas de una categoría principal. */
+export function getSubcategories(
+  parentId: number,
+  options?: { includeInactive?: boolean },
+): Category[] {
+  return getCategories(options).filter((category) => category.parent_id === parentId);
+}
+
+/** Árbol aplanado: cada principal seguida de sus subcategorías, con su nivel. */
+export function getCategoryTree(options?: { includeInactive?: boolean }): Category[] {
+  const all = getCategories(options);
+  const childrenOf = new Map<number, Category[]>();
+  for (const category of all) {
+    if (category.parent_id === null) continue;
+    const list = childrenOf.get(category.parent_id) ?? [];
+    list.push(category);
+    childrenOf.set(category.parent_id, list);
+  }
+
+  const ordered: Category[] = [];
+  for (const root of all.filter((category) => category.parent_id === null)) {
+    ordered.push({ ...root, depth: 0 });
+    for (const child of childrenOf.get(root.id) ?? []) {
+      ordered.push({ ...child, depth: 1 });
+    }
+  }
+
+  // Subcategorías cuyo padre ya no existe se muestran como principales.
+  const shown = new Set(ordered.map((category) => category.id));
+  for (const category of all) {
+    if (!shown.has(category.id)) ordered.push({ ...category, depth: 0 });
+  }
+  return ordered;
+}
+
+/** Camino desde la categoría principal hasta el padre de la indicada. */
+export function getCategoryAncestors(category: Category): Category[] {
+  if (category.parent_id === null) return [];
+  const all = getCategories({ includeInactive: true });
+  const parent = all.find((item) => item.id === category.parent_id);
+  if (!parent) return [];
+  return [...getCategoryAncestors(parent), parent];
+}
+
+/** Identificadores de todas las subcategorías que dependen de una categoría. */
+export function getCategoryDescendantIds(categoryId: number): number[] {
+  const all = getCategories({ includeInactive: true });
+  const found: number[] = [];
+  const walk = (id: number) => {
+    for (const category of all) {
+      if (category.parent_id === id && !found.includes(category.id)) {
+        found.push(category.id);
+        walk(category.id);
+      }
+    }
+  };
+  walk(categoryId);
+  return found;
 }
 
 export function getCategoryBySlug(slug: string): Category | null {
-  return (getDb().prepare('SELECT * FROM categories WHERE slug = ?').get(slug) as
+  const row = getDb().prepare('SELECT * FROM categories WHERE slug = ?').get(slug) as
     | Category
-    | undefined) ?? null;
+    | undefined;
+  if (!row) return null;
+  return attachParents([row])[0];
 }
 
 export function getActiveOffers(): Offer[] {

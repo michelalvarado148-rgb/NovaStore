@@ -195,6 +195,35 @@ export function deleteProduct(id: number): { ok: true } | { ok: false; error: st
 
 /* ----------------------------- Categorías ---------------------------- */
 
+const CATEGORY_PARENT_PREFIX = 'cat_parent:';
+
+function readParentId(categoryId: number): number | null {
+  const row = getDb()
+    .prepare('SELECT value FROM settings WHERE key = ?')
+    .get(`${CATEGORY_PARENT_PREFIX}${categoryId}`) as { value: string } | undefined;
+  const parentId = row ? Number(row.value) : NaN;
+  return Number.isInteger(parentId) && parentId > 0 ? parentId : null;
+}
+
+function writeParentId(categoryId: number, parentId: number | null): void {
+  const db = getDb();
+  if (parentId === null) {
+    db.prepare('DELETE FROM settings WHERE key = ?').run(`${CATEGORY_PARENT_PREFIX}${categoryId}`);
+    return;
+  }
+  db.prepare(
+    `INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+  ).run(`${CATEGORY_PARENT_PREFIX}${categoryId}`, String(parentId), nowIso());
+}
+
+function countSubcategories(categoryId: number): number {
+  const row = getDb()
+    .prepare("SELECT COUNT(*) AS total FROM settings WHERE key LIKE 'cat_parent:%' AND value = ?")
+    .get(String(categoryId)) as { total: number };
+  return row.total;
+}
+
 export function saveCategory(input: {
   id?: number;
   name: string;
@@ -202,6 +231,7 @@ export function saveCategory(input: {
   imageUrl: string | null;
   position: number;
   isActive: boolean;
+  parentId?: number | null;
 }): { ok: true; id: number } | { ok: false; error: string } {
   const db = getDb();
   const name = input.name.trim();
@@ -212,6 +242,28 @@ export function saveCategory(input: {
     .get(name) as { id: number } | undefined;
   if (duplicate && duplicate.id !== input.id) {
     return { ok: false, error: 'Ya existe una categoría con ese nombre.' };
+  }
+
+  const parentId = input.parentId ?? null;
+  if (parentId !== null) {
+    if (input.id && parentId === input.id) {
+      return { ok: false, error: 'Una categoría no puede ser subcategoría de sí misma.' };
+    }
+    const parent = db.prepare('SELECT id FROM categories WHERE id = ?').get(parentId) as
+      | { id: number }
+      | undefined;
+    if (!parent) {
+      return { ok: false, error: 'La categoría principal seleccionada no existe.' };
+    }
+    if (readParentId(parentId) !== null) {
+      return { ok: false, error: 'Solo se permiten dos niveles: elige una categoría principal.' };
+    }
+    if (input.id && countSubcategories(input.id) > 0) {
+      return {
+        ok: false,
+        error: 'Esa categoría tiene subcategorías; no puede convertirse en subcategoría.',
+      };
+    }
   }
 
   if (input.id) {
@@ -227,6 +279,7 @@ export function saveCategory(input: {
       input.isActive ? 1 : 0,
       input.id,
     );
+    writeParentId(input.id, parentId);
     return { ok: true, id: input.id };
   }
 
@@ -244,11 +297,20 @@ export function saveCategory(input: {
       input.isActive ? 1 : 0,
       nowIso(),
     );
-  return { ok: true, id: Number(info.lastInsertRowid) };
+  const newId = Number(info.lastInsertRowid);
+  writeParentId(newId, parentId);
+  return { ok: true, id: newId };
 }
 
 export function deleteCategory(id: number): { ok: true } | { ok: false; error: string } {
   const db = getDb();
+  const children = countSubcategories(id);
+  if (children > 0) {
+    return {
+      ok: false,
+      error: `La categoría tiene ${children} subcategoría(s). Elimínalas o muévelas a otra categoría principal antes de borrarla.`,
+    };
+  }
   const products = db
     .prepare('SELECT COUNT(*) AS total FROM products WHERE category_id = ?')
     .get(id) as { total: number };
@@ -259,7 +321,36 @@ export function deleteCategory(id: number): { ok: true } | { ok: false; error: s
     };
   }
   db.prepare('DELETE FROM categories WHERE id = ?').run(id);
+  writeParentId(id, null);
   return { ok: true };
+}
+
+/** Mueve productos existentes a otra categoría o subcategoría sin duplicarlos. */
+export function moveProductsToCategory(input: {
+  productIds: number[];
+  targetCategoryId: number;
+}): { ok: true; moved: number } | { ok: false; error: string } {
+  const db = getDb();
+  const target = db
+    .prepare('SELECT id FROM categories WHERE id = ?')
+    .get(input.targetCategoryId) as { id: number } | undefined;
+  if (!target) return { ok: false, error: 'La categoría de destino no existe.' };
+
+  const ids = Array.from(
+    new Set(input.productIds.filter((id) => Number.isInteger(id) && id > 0)),
+  );
+  if (ids.length === 0) return { ok: false, error: 'Selecciona al menos un producto.' };
+
+  const now = nowIso();
+  const update = db.prepare('UPDATE products SET category_id = ?, updated_at = ? WHERE id = ?');
+  const moved = db.transaction(() => {
+    let total = 0;
+    for (const id of ids) total += update.run(input.targetCategoryId, now, id).changes;
+    return total;
+  })();
+
+  if (moved === 0) return { ok: false, error: 'No se encontraron esos productos.' };
+  return { ok: true, moved };
 }
 
 /* ------------------------------ Ofertas ------------------------------ */
