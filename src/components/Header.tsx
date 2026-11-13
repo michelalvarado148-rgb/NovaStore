@@ -116,6 +116,28 @@ export default async function Header({
               {category.name}
             </Link>
           ))}
+          {user ? (
+            <>
+              <Link
+                href="/cuenta/pedidos"
+                className="whitespace-nowrap rounded-lg px-3 py-1.5 text-slate-300 transition hover:bg-purple-500/10 hover:text-white"
+              >
+                Mis compras
+              </Link>
+              <Link
+                href="/cuenta/saldo"
+                className="whitespace-nowrap rounded-lg px-3 py-1.5 text-slate-300 transition hover:bg-purple-500/10 hover:text-white"
+              >
+                Añadir saldo
+              </Link>
+              <Link
+                href="/cuenta/soporte"
+                className="whitespace-nowrap rounded-lg px-3 py-1.5 text-slate-300 transition hover:bg-purple-500/10 hover:text-white"
+              >
+                Soporte
+              </Link>
+            </>
+          ) : null}
           <Link
             href="/contacto"
             className="ml-auto hidden whitespace-nowrap rounded-lg px-3 py-1.5 font-semibold text-fuchsia-200 transition hover:bg-fuchsia-500/10 hover:text-white sm:block"
