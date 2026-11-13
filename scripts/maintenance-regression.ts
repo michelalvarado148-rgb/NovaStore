@@ -178,7 +178,7 @@ async function main() {
       ['/checkout', 'checkout'],
       ['/cuenta', 'cuenta'],
       ['/cuenta/saldo', 'añadir saldo'],
-      ['/cuenta/compras', 'mis compras'],
+      ['/cuenta/pedidos', 'mis compras'],
       ['/cuenta/soporte', 'soporte'],
       ['/pedido/NOVA-0000', 'detalle de pedido'],
       ['/contacto', 'contacto'],

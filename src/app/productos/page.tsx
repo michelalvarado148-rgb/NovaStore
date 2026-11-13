@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import MaintenanceScreen from '@/components/MaintenanceScreen';
+import { isStoreClosed } from '@/lib/maintenance';
 import ProductCard from '@/components/ProductCard';
 import {
   computePricing,
@@ -32,6 +34,7 @@ const SORTS = [
 ] as const;
 
 export default async function ProductsPage({ searchParams }: { searchParams: SearchParams }) {
+  if (await isStoreClosed()) return <MaintenanceScreen />;
   const sp = await searchParams;
   const query = (sp.q ?? '').trim();
   const categorySlug = (sp.categoria ?? '').trim();
