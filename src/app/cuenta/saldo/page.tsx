@@ -2,11 +2,11 @@ import { requireUser } from '@/lib/auth';
 import { getBalanceMovements } from '@/lib/orders';
 import { formatDateTime, formatPEN } from '@/lib/format';
 import {
-  RECHARGE_MAX_CENTS,
   RECHARGE_MIN_CENTS,
   getMyRecharges,
   getRechargeMethods,
 } from '@/lib/recharge';
+import { RechargeAmountField } from '@/components/RechargeAmountField';
 import { createRechargeAction } from '@/app/actions/recharge';
 
 export const dynamic = 'force-dynamic';
@@ -109,19 +109,7 @@ export default async function BalancePage({
           ) : null}
 
           <form action={createRechargeAction} className="grid gap-3 sm:grid-cols-2">
-            <label className="block text-sm text-slate-300">
-              Monto a recargar (S/)
-              <input
-                type="number"
-                name="amount"
-                required
-                min={RECHARGE_MIN_CENTS / 100}
-                max={RECHARGE_MAX_CENTS / 100}
-                step="0.10"
-                placeholder="20.00"
-                className="input mt-1.5 w-full"
-              />
-            </label>
+            <RechargeAmountField minAmount={RECHARGE_MIN_CENTS / 100} />
             <label className="block text-sm text-slate-300">
               Método de pago
               <select name="method" required className="input mt-1.5 w-full">

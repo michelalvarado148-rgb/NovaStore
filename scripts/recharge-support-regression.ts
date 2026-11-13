@@ -12,12 +12,14 @@ process.env.DATABASE_PATH = path.join(tmpDir, 'regression.db');
 
 async function main() {
   const { getDb } = await import('../src/lib/db');
+  const rechargeModule = await import('../src/lib/recharge');
   const {
+    RECHARGE_MIN_CENTS,
     countPendingRecharges,
     createRechargeRequest,
     getMyRecharges,
     reviewRechargeRequest,
-  } = await import('../src/lib/recharge');
+  } = rechargeModule;
   const {
     countUnreadForAdmin,
     countUnreadForUser,
@@ -94,6 +96,46 @@ async function main() {
     file: new File([Buffer.from('x')], 'p.png', { type: 'image/png' }),
   });
   assert.equal(montoBajo.ok, false, 'No debe aceptar montos menores al mínimo');
+
+  // 4b. Límites nuevos: mínimo S/ 10.00 y sin monto máximo.
+  assert.equal(RECHARGE_MIN_CENTS, 1000, 'El monto mínimo de recarga debe ser S/ 10.00');
+  assert.equal(
+    'RECHARGE_MAX_CENTS' in rechargeModule,
+    false,
+    'No debe existir un monto máximo de recarga',
+  );
+
+  const casiMinimo = await createRechargeRequest({
+    userId: clienteA,
+    amountCents: 999,
+    method: method.code,
+    reference: '',
+    note: '',
+    file: new File([Buffer.from('x')], 'p.png', { type: 'image/png' }),
+  });
+  assert.equal(casiMinimo.ok, false, 'S/ 9.99 debe rechazarse por debajo del mínimo');
+
+  const montoMinimo = await createRechargeRequest({
+    userId: clienteB,
+    amountCents: RECHARGE_MIN_CENTS,
+    method: method.code,
+    reference: '',
+    note: '',
+    file: new File([Buffer.from('x')], 'minimo.png', { type: 'image/png' }),
+  });
+  assert.ok(montoMinimo.ok, 'Debe aceptar exactamente S/ 10.00');
+  if (montoMinimo.ok) db.prepare('DELETE FROM recharge_requests WHERE id = ?').run(montoMinimo.id);
+
+  const montoAlto = await createRechargeRequest({
+    userId: clienteB,
+    amountCents: 500000,
+    method: method.code,
+    reference: '',
+    note: '',
+    file: new File([Buffer.from('x')], 'alto.png', { type: 'image/png' }),
+  });
+  assert.ok(montoAlto.ok, 'No debe existir monto máximo: S/ 5,000 debe aceptarse');
+  if (montoAlto.ok) db.prepare('DELETE FROM recharge_requests WHERE id = ?').run(montoAlto.id);
 
   // 5. Recarga válida: queda pendiente hasta que el admin la revise.
   const valida = await createRechargeRequest({
