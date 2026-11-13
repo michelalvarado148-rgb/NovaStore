@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import Database from 'better-sqlite3';
+import { attachPersistence, ensureRestore, persistenceReady } from './persistence';
 
 export type Db = Database.Database;
 
@@ -260,6 +261,10 @@ function openDb(): Db {
   db.exec(SCHEMA);
   migrate(db);
   seed(db);
+  // Supabase es la copia permanente: se replica cada escritura y se restaura
+  // el contenido al arrancar. Si no está disponible, la tienda sigue con SQLite.
+  attachPersistence(db);
+  void ensureRestore(db);
   return db;
 }
 
@@ -284,6 +289,15 @@ export function getDb(): Db {
     global.__novaStoreDb = openDb();
   }
   return global.__novaStoreDb;
+}
+
+/**
+ * Prepara la base y espera a que termine la restauración desde Supabase.
+ * Se llama desde src/instrumentation.ts al arrancar el servidor.
+ */
+export async function warmPersistence(): Promise<void> {
+  getDb();
+  await persistenceReady();
 }
 
 /* ------------------------------------------------------------------ */
