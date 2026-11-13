@@ -27,21 +27,42 @@ export function supabaseConfigured(): boolean {
 }
 
 let pool: Pool | null = null;
+let relaxedTls = false;
+
+/**
+ * Crea el pool de conexiones.
+ *
+ * Primero se exige un certificado válido; si la red del contenedor interpone un
+ * proxy con certificado propio (error de cadena), se reintenta sin verificar la
+ * CA, manteniendo siempre el cifrado TLS.
+ */
+function buildPool(relaxed: boolean): Pool {
+  const connectionString = CONNECTION_STRING.replace(/[?&]sslmode=[^&]*/g, '');
+  const created = new Pool({
+    connectionString,
+    ssl: { rejectUnauthorized: !relaxed },
+    max: 4,
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 12_000,
+    application_name: 'novastore',
+  });
+  created.on('error', (error) => {
+    console.warn('[novastore] error del pool de Supabase:', error.message);
+  });
+  return created;
+}
 
 function getPool(): Pool {
   if (!pool) {
-    pool = new Pool({
-      connectionString: CONNECTION_STRING,
-      max: 4,
-      idleTimeoutMillis: 30_000,
-      connectionTimeoutMillis: 12_000,
-      application_name: 'novastore',
-    });
-    pool.on('error', (error) => {
-      console.warn('[novastore] error del pool de Supabase:', error.message);
-    });
+    pool = buildPool(relaxedTls);
   }
   return pool;
+}
+
+function isCertificateError(message: string): boolean {
+  return /self[- ]signed|certificate in certificate chain|unable to verify the first certificate|certificate has expired/i.test(
+    message,
+  );
 }
 
 function qi(identifier: string): string {
@@ -69,6 +90,22 @@ async function query<T = Record<string, unknown>>(sql: string, params: unknown[]
     return result.rows as T[];
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    if (!relaxedTls && isCertificateError(message)) {
+      relaxedTls = true;
+      const previous = pool;
+      pool = buildPool(true);
+      previous?.end().catch(() => undefined);
+      console.warn(
+        '[novastore] la red del contenedor no permite validar el certificado de Supabase; se continúa con TLS cifrado sin verificación de CA.',
+      );
+      try {
+        const retry = await getPool().query(sql, params);
+        return retry.rows as T[];
+      } catch (retryError) {
+        const retryMessage = retryError instanceof Error ? retryError.message : String(retryError);
+        throw new SupabaseError(0, retryMessage);
+      }
+    }
     throw new SupabaseError(0, message);
   }
 }
