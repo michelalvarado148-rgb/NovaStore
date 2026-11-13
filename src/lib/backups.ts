@@ -2,8 +2,9 @@
  * Copias de seguridad de NOVASTORE.
  *
  * Cada copia guarda el contenido completo de las tablas de la tienda en un JSON
- * (comprimido con gzip y codificado en base64) que se almacena en la tabla
- * `backups`, replicada en Supabase igual que el resto de la base. Los
+ * (comprimido con gzip y codificado en base64). El historial se guarda en la
+ * tabla local `backups` y se espeja en la tabla `settings` de Supabase con el
+ * prefijo reservado `backup:`, que ya está replicada. Los
  * comprobantes de pago viajan dentro de la copia como datos binarios, así que no
  * hace falta un bucket externo para no perderlos.
  *
@@ -20,12 +21,16 @@ import crypto from 'node:crypto';
 import zlib from 'node:zlib';
 import type { Db } from './db';
 import { ensureAdmin, getDb, nowIso } from './db';
-import { syncTablesNow } from './persistence';
+import { persistenceReady, syncTablesNow } from './persistence';
 
 type Row = Record<string, unknown>;
 
 export const BACKUP_FORMAT = 'novastore-backup';
 export const BACKUP_VERSION = 1;
+
+/** Prefijos reservados en `settings` para el historial de copias en Supabase. */
+const MIRROR_PREFIX = 'backup:row:';
+const AUTO_PREFIX = 'backup:auto:';
 
 /** Tablas que se guardan en cada copia, en orden padre → hijo. */
 export const BACKUP_TABLES = [
@@ -45,7 +50,6 @@ export const BACKUP_TABLES = [
   'recharge_requests',
   'support_threads',
   'support_messages',
-  'backup_settings',
 ] as const;
 
 /** Columnas binarias: se codifican en base64 dentro del JSON. */
@@ -131,7 +135,13 @@ export function buildSnapshot(db: Db): BackupSnapshot {
   const counts: Record<string, number> = {};
 
   for (const name of BACKUP_TABLES) {
-    const rows = db.prepare(`SELECT * FROM ${name}`).all() as Row[];
+    // Las copias guardadas viven en `settings` con prefijo reservado: nunca se
+    // incluyen dentro de otra copia ni se pierden al restaurar.
+    const query =
+      name === 'settings'
+        ? `SELECT * FROM settings WHERE key NOT LIKE '${MIRROR_PREFIX}%'`
+        : `SELECT * FROM ${name}`;
+    const rows = db.prepare(query).all() as Row[];
     const blobs = BLOB_COLUMNS[name] ?? [];
     tables[name] = rows.map((row) => {
       const encoded: Row = {};
@@ -180,6 +190,142 @@ function defaultName(kind: BackupKind, date: Date): string {
 }
 
 /* ------------------------------------------------------------------ */
+/* Espejo en Supabase (tabla settings)                                */
+/* ------------------------------------------------------------------ */
+
+function upsertSetting(db: Db, key: string, value: string): void {
+  db.prepare(
+    `INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+  ).run(key, value, nowIso());
+}
+
+/**
+ * Copia el historial local a la tabla `settings`, que sí está replicada en
+ * Supabase. Así las copias sobreviven a los despliegues y a la pérdida del
+ * contenedor sin necesitar tablas nuevas ni permisos de administrador.
+ */
+function mirrorToSettings(db: Db): void {
+  const keep = new Set<string>();
+
+  const rows = db.prepare('SELECT * FROM backups').all() as Row[];
+  for (const row of rows) {
+    const key = `${MIRROR_PREFIX}${row.id}`;
+    keep.add(key);
+    upsertSetting(db, key, JSON.stringify(row));
+  }
+
+  const settingsRows = db.prepare('SELECT key, value FROM backup_settings').all() as {
+    key: string;
+    value: string;
+  }[];
+  for (const row of settingsRows) {
+    const key = `${AUTO_PREFIX}${row.key}`;
+    keep.add(key);
+    upsertSetting(db, key, row.value);
+  }
+
+  const existing = db
+    .prepare(
+      `SELECT key FROM settings WHERE key LIKE '${MIRROR_PREFIX}%' OR key LIKE '${AUTO_PREFIX}%'`,
+    )
+    .all() as { key: string }[];
+  const remove = db.prepare('DELETE FROM settings WHERE key = ?');
+  for (const row of existing) {
+    if (!keep.has(row.key)) remove.run(row.key);
+  }
+}
+
+/** Reconstruye el historial local desde Supabase (contenedor nuevo). */
+function hydrateFromSettings(db: Db): void {
+  const local = db.prepare('SELECT COUNT(*) AS total FROM backups').get() as { total: number };
+  if (local.total > 0) return;
+
+  const rows = db
+    .prepare(`SELECT key, value FROM settings WHERE key LIKE '${MIRROR_PREFIX}%'`)
+    .all() as { key: string; value: string }[];
+
+  const insert = db.prepare(
+    `INSERT OR REPLACE INTO backups
+      (id, name, kind, status, size_bytes, rows_count, tables_count, checksum, origin, note, payload, created_by, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  );
+
+  for (const row of rows) {
+    try {
+      const data = JSON.parse(row.value) as Row;
+      insert.run(
+        Number(data.id),
+        String(data.name),
+        String(data.kind ?? 'manual'),
+        String(data.status ?? 'completa'),
+        Number(data.size_bytes ?? 0),
+        Number(data.rows_count ?? 0),
+        Number(data.tables_count ?? 0),
+        String(data.checksum ?? ''),
+        (data.origin ?? null) as string | null,
+        (data.note ?? null) as string | null,
+        String(data.payload ?? ''),
+        (data.created_by ?? null) as number | null,
+        String(data.created_at ?? nowIso()),
+      );
+    } catch {
+      // Una fila ilegible no debe impedir recuperar el resto del historial.
+    }
+  }
+
+  const auto = db
+    .prepare(`SELECT key, value FROM settings WHERE key LIKE '${AUTO_PREFIX}%'`)
+    .all() as { key: string; value: string }[];
+  for (const row of auto) {
+    setBackupSetting(db, row.key.slice(AUTO_PREFIX.length), row.value);
+  }
+}
+
+let prepared = false;
+
+/** Deja el historial listo (recuperado de Supabase) antes de leerlo o escribirlo. */
+export async function prepareBackups(db: Db = getDb()): Promise<void> {
+  if (prepared) return;
+  try {
+    await persistenceReady();
+  } catch {
+    // Sin Supabase se trabaja con el historial local.
+  }
+  try {
+    hydrateFromSettings(db);
+  } catch (error) {
+    console.warn(
+      '[novastore] no se pudo recuperar el historial de copias:',
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+  prepared = true;
+}
+
+/** Guarda el historial local en Supabase de forma inmediata. */
+export async function flushBackups(db: Db = getDb()): Promise<void> {
+  try {
+    mirrorToSettings(db);
+  } catch (error) {
+    console.warn(
+      '[novastore] no se pudo espejar el historial de copias:',
+      error instanceof Error ? error.message : String(error),
+    );
+    return;
+  }
+  try {
+    await syncTablesNow(db, ['settings']);
+  } catch (error) {
+    console.warn(
+      `[novastore] el historial de copias no se pudo replicar en Supabase: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Crear                                                              */
 /* ------------------------------------------------------------------ */
 
@@ -195,6 +341,7 @@ export async function createBackup(
   options: CreateBackupOptions = {},
 ): Promise<{ ok: true; backup: BackupSummary } | { ok: false; error: string }> {
   const db = getDb();
+  await prepareBackups(db);
   const kind: BackupKind = options.kind ?? 'manual';
 
   let snapshot: BackupSnapshot;
@@ -257,15 +404,7 @@ export async function createBackup(
 
   setBackupSetting(db, 'last_backup_at', createdAt);
 
-  try {
-    await syncTablesNow(db, ['backups', 'backup_settings']);
-  } catch (error) {
-    console.warn(
-      `[novastore] la copia ${id} se guardó en local pero no se pudo replicar en Supabase: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
-    );
-  }
+  await flushBackups(db);
 
   const backup = getBackup(db, id);
   if (!backup) return { ok: false, error: 'La copia no se pudo leer después de guardarla.' };
@@ -328,6 +467,7 @@ export type RestoreResult =
 
 export async function restoreBackup(id: number, adminId: number | null): Promise<RestoreResult> {
   const db = getDb();
+  await prepareBackups(db);
   const row = db.prepare('SELECT * FROM backups WHERE id = ?').get(id) as
     | (BackupSummary & { payload: string })
     | undefined;
@@ -374,6 +514,11 @@ export async function restoreBackup(id: number, adminId: number | null): Promise
     const apply = db.transaction(() => {
       // Hijos primero para respetar las claves foráneas (orders → users, etc.).
       for (const name of [...BACKUP_TABLES].reverse()) {
+        // En `settings` se conservan las copias guardadas (prefijo reservado).
+        if (name === 'settings') {
+          db.prepare(`DELETE FROM settings WHERE key NOT LIKE '${MIRROR_PREFIX}%'`).run();
+          continue;
+        }
         db.prepare(`DELETE FROM ${name}`).run();
       }
       for (const name of BACKUP_TABLES) {
@@ -441,6 +586,7 @@ export type ImportResult =
 
 export async function importBackup(text: string, adminId: number | null): Promise<ImportResult> {
   const db = getDb();
+  await prepareBackups(db);
   const trimmed = text.trim();
   if (trimmed.length === 0) return { ok: false, error: 'El archivo está vacío.' };
 
@@ -500,15 +646,7 @@ export async function importBackup(text: string, adminId: number | null): Promis
   db.prepare('UPDATE backups SET status = ? WHERE id = ?').run(verified ? 'completa' : 'error', id);
   if (!verified) return { ok: false, error: 'La copia importada no pasó la verificación.' };
 
-  try {
-    await syncTablesNow(db, ['backups']);
-  } catch (error) {
-    console.warn(
-      `[novastore] la copia importada no se pudo replicar en Supabase: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
-    );
-  }
+  await flushBackups(db);
 
   const backup = getBackup(db, id);
   if (!backup) return { ok: false, error: 'La copia importada no se pudo leer.' };
@@ -517,20 +655,13 @@ export async function importBackup(text: string, adminId: number | null): Promis
 
 export async function deleteBackup(id: number): Promise<{ ok: boolean; error?: string }> {
   const db = getDb();
+  await prepareBackups(db);
   const row = getBackup(db, id);
   if (!row) return { ok: false, error: 'La copia no existe.' };
 
   db.prepare('DELETE FROM backups WHERE id = ?').run(id);
 
-  try {
-    await syncTablesNow(db, ['backups']);
-  } catch (error) {
-    console.warn(
-      `[novastore] la copia ${id} se borró en local pero no se pudo replicar el borrado en Supabase: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
-    );
-  }
+  await flushBackups(db);
   return { ok: true };
 }
 
@@ -612,11 +743,7 @@ export async function maybeRunAutomaticBackup(
     if (!result.ok) return { ran: false, reason: result.error };
 
     setBackupSetting(db, SETTINGS_KEYS.lastRun, nowIso());
-    try {
-      await syncTablesNow(db, ['backup_settings']);
-    } catch {
-      // El ajuste se sincronizará en la próxima escritura.
-    }
+    await flushBackups(db);
     return { ran: true, backup: result.backup };
   } finally {
     autoRunning = false;
