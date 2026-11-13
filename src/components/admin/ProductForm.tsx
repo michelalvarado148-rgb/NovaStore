@@ -2,7 +2,9 @@ import Link from 'next/link';
 import { getCategoryTree } from '@/lib/catalog';
 import { saveProductAction } from '@/app/actions/admin';
 import ImagePicker from '@/components/admin/ImagePicker';
+import ProductNoticeFields from '@/components/admin/ProductNoticeFields';
 import type { AdminProduct } from '@/lib/admin';
+import type { ProductNotice } from '@/lib/product-notice';
 import { centsToInput } from '@/lib/format';
 
 const VARIANT_ROWS = 5;
@@ -10,9 +12,11 @@ const VARIANT_ROWS = 5;
 export default function ProductForm({
   product,
   variants = [],
+  notice = null,
 }: {
   product?: AdminProduct;
   variants?: { id: number; name: string; price_cents: number | null; stock: number | null }[];
+  notice?: ProductNotice | null;
 }) {
   const categories = getCategoryTree({ includeInactive: true });
   const rows = Array.from({ length: Math.max(VARIANT_ROWS, variants.length) });
@@ -131,6 +135,8 @@ export default function ProductForm({
           precio del producto.
         </p>
       </div>
+
+      <ProductNoticeFields initial={notice} />
 
       <div className="flex flex-wrap gap-2">
         <button type="submit" className="btn btn-primary">

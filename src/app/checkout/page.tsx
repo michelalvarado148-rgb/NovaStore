@@ -5,7 +5,8 @@ import { getCart } from '@/lib/cart';
 import { getPaymentMethods, getSettings } from '@/lib/catalog';
 import { formatPEN } from '@/lib/format';
 import CheckoutPayment from '@/components/CheckoutPayment';
-import { placeOrderAction } from '@/app/actions/checkout';
+import CheckoutForm from '@/components/CheckoutForm';
+import { getActiveNotices, toPublicNotice } from '@/lib/product-notice';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Confirmar pedido' };
@@ -21,6 +22,14 @@ export default async function CheckoutPage({
   const methods = getPaymentMethods(true);
   const settings = getSettings();
   const idempotencyKey = randomUUID();
+
+  // Avisos y requisitos configurados para los productos del carrito.
+  const notices = Array.from(
+    getActiveNotices(cart.lines.map((line) => line.product_id)).entries(),
+  ).map(([productId, config]) => {
+    const line = cart.lines.find((item) => item.product_id === productId);
+    return toPublicNotice(productId, line?.name ?? 'Producto', config);
+  });
 
   if (cart.lines.length === 0) {
     return (
@@ -47,7 +56,7 @@ export default async function CheckoutPage({
         </div>
       ) : null}
 
-      <form action={placeOrderAction} className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+      <CheckoutForm notices={notices} className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <input type="hidden" name="idempotency_key" value={idempotencyKey} />
 
         <div className="space-y-4">
@@ -142,6 +151,13 @@ export default async function CheckoutPage({
             </div>
           </div>
 
+          {notices.length > 0 ? (
+            <p className="mt-4 rounded-lg border border-purple-500/30 bg-purple-500/10 px-3 py-2 text-[0.7rem] font-semibold text-purple-100">
+              📋 Este pedido tiene {notices.length === 1 ? 'un aviso' : `${notices.length} avisos`} que
+              debes leer antes de confirmar.
+            </p>
+          ) : null}
+
           <button type="submit" className="btn btn-primary mt-5 w-full" disabled={methods.length === 0}>
             Confirmar pedido
           </button>
@@ -155,7 +171,7 @@ export default async function CheckoutPage({
             {settings.contact_email || 'contacto de la tienda'}.
           </p>
         </aside>
-      </form>
+      </CheckoutForm>
     </div>
   );
 }
