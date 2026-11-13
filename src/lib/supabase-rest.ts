@@ -110,6 +110,14 @@ async function query<T = Record<string, unknown>>(sql: string, params: unknown[]
   }
 }
 
+/** Ejecuta SQL parametrizado (usado por la capa de imágenes). */
+export async function sbQuery<T = Record<string, unknown>>(
+  sql: string,
+  params: unknown[] = [],
+): Promise<T[]> {
+  return query<T>(sql, params);
+}
+
 /** Lee todas las filas de una tabla. */
 export async function sbSelect<T = Record<string, unknown>>(
   table: string,
