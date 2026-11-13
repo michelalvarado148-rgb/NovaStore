@@ -1,10 +1,14 @@
 import Link from 'next/link';
 import { getPaymentMethods, getSettings } from '@/lib/catalog';
+import MaintenanceScreen from '@/components/MaintenanceScreen';
+import { isStoreClosed } from '@/lib/maintenance';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Contacto y soporte' };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  if (await isStoreClosed()) return <MaintenanceScreen />;
+
   const settings = getSettings();
   const methods = getPaymentMethods(true);
 

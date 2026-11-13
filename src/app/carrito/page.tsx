@@ -3,6 +3,8 @@ import { getCart } from '@/lib/cart';
 import { getCurrentUser } from '@/lib/auth';
 import { formatPEN } from '@/lib/format';
 import { removeCartAction, updateCartAction } from '@/app/actions/cart';
+import MaintenanceScreen from '@/components/MaintenanceScreen';
+import { isStoreClosed } from '@/lib/maintenance';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Carrito de compras' };
@@ -12,6 +14,8 @@ export default async function CartPage({
 }: {
   searchParams: Promise<{ agregado?: string; error?: string }>;
 }) {
+  if (await isStoreClosed()) return <MaintenanceScreen />;
+
   const { agregado, error } = await searchParams;
   const [cart, user] = await Promise.all([getCart(), getCurrentUser()]);
 

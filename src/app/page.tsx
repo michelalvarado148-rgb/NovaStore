@@ -3,10 +3,14 @@ import ProductCard from '@/components/ProductCard';
 import CategoryCard from '@/components/CategoryCard';
 import { getActiveOffers, getProducts, getRecentPurchases, getRootCategories, getSettings, computePricing } from '@/lib/catalog';
 import { formatPEN, maskName, timeAgo } from '@/lib/format';
+import MaintenanceScreen from '@/components/MaintenanceScreen';
+import { isStoreClosed } from '@/lib/maintenance';
 
 export const dynamic = 'force-dynamic';
 
-export default function HomePage() {
+export default async function HomePage() {
+  if (await isStoreClosed()) return <MaintenanceScreen />;
+
   const settings = getSettings();
   const categories = getRootCategories();
   const offers = getActiveOffers();

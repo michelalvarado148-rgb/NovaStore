@@ -128,6 +128,12 @@ export function formatReturnAt(value: string): string {
   }
 }
 
+export async function guardStoreOpen(): Promise<void> {
+  if (!(await isStoreClosed())) return;
+  const { redirect } = await import('next/navigation');
+  redirect('/mantenimiento');
+}
+
 /**
  * ¿Debe bloquearse la tienda para quien hace la petición?
  *

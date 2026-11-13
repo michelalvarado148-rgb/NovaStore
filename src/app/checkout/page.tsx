@@ -8,6 +8,8 @@ import CheckoutPayment from '@/components/CheckoutPayment';
 import CheckoutForm from '@/components/CheckoutForm';
 import ConfirmOrderButton from '@/components/ConfirmOrderButton';
 import { getActiveNotices, toPublicNotice } from '@/lib/product-notice';
+import MaintenanceScreen from '@/components/MaintenanceScreen';
+import { isStoreClosed } from '@/lib/maintenance';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Confirmar pedido' };
@@ -17,6 +19,8 @@ export default async function CheckoutPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
+  if (await isStoreClosed()) return <MaintenanceScreen />;
+
   const user = await requireUser('/checkout');
   const { error } = await searchParams;
   const cart = await getCart();
