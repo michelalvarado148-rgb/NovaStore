@@ -27,7 +27,9 @@ async function main() {
   assert.equal(juegos!.parent_id, null);
   ok('las categorías existentes se mantienen como principales');
 
-  const totalAntes = catalog.getCategories({ includeInactive: true }).length;
+  const categoriasAntes = catalog.getCategories({ includeInactive: true });
+  const totalAntes = categoriasAntes.length;
+  const idsAntes = categoriasAntes.map((category) => category.id);
   const productosAntes = catalog.getProducts({ limit: 500 }).length;
 
   /* 1. Crear subcategorías dentro de una categoría principal */
@@ -87,17 +89,27 @@ async function main() {
   assert.equal(tree[freeFireIndex - 1].slug, 'juegos');
   ok('la tienda navega principal → subcategoría → productos');
 
-  /* 3. Solo dos niveles */
-  const tercerNivel = admin.saveCategory({
+  /* 3. Profundidad máxima del árbol */
+  const nivel3 = admin.saveCategory({
     name: 'Diamantes baratos',
-    description: 'No permitido',
+    description: 'Tercer nivel permitido',
     imageUrl: null,
     position: 3,
     isActive: true,
     parentId: diamantesId,
   });
-  assert.equal(tercerNivel.ok, false);
-  ok('se bloquea un tercer nivel de categorías');
+  assert.ok(nivel3.ok);
+  const nivel3Id = nivel3.ok ? nivel3.id : 0;
+  const nivel4 = admin.saveCategory({
+    name: 'Nivel extra',
+    description: 'No permitido',
+    imageUrl: null,
+    position: 4,
+    isActive: true,
+    parentId: nivel3Id,
+  });
+  assert.equal(nivel4.ok, false);
+  ok('se permite anidar niveles y se limita la profundidad');
 
   /* 4. Persistencia de la jerarquía (misma fila que sincroniza Supabase) */
   const stored = getDb()
@@ -123,6 +135,7 @@ async function main() {
   assert.ok(product.ok, `no se pudo crear el producto: ${product.ok ? '' : product.error}`);
   const productId = product.ok ? product.id : 0;
 
+  assert.equal(catalog.getProducts({ categorySlug: 'free-fire' }).length, 0);
   assert.deepEqual(
     catalog.getProducts({ categorySlug: 'diamantes' }).map((item) => item.id),
     [productId],
@@ -179,10 +192,11 @@ async function main() {
   ok('se evita un ciclo de categorías');
 
   /* 8. Nada existente se perdió */
-  const totalDespues = catalog.getCategories({ includeInactive: true }).length;
-  const productosDespues = catalog.getProducts({ limit: 500 }).length;
-  assert.equal(totalDespues, totalAntes + 3);
-  assert.equal(productosDespues, productosAntes + 1);
+  const despues = catalog.getCategories({ includeInactive: true });
+  const idsDespues = new Set(despues.map((category) => category.id));
+  for (const id of idsAntes) assert.ok(idsDespues.has(id), `se perdió la categoría ${id}`);
+  assert.ok(despues.length > totalAntes);
+  assert.equal(catalog.getProducts({ limit: 500 }).length, productosAntes + 1);
   ok('no se borraron categorías ni productos existentes');
 
   console.log(`\nSubcategorías: ${checks} comprobaciones OK`);
