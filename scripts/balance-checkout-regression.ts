@@ -36,6 +36,8 @@ function fail(message: string): never {
 async function main() {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novastore-saldo-'));
   process.env.DATABASE_PATH = path.join(tmpDir, 'saldo.db');
+  // Aísla la prueba: no restaura ni replica datos en Supabase.
+  process.env.NOVASTORE_DISABLE_SYNC = "1";
 
   const { getDb, nowIso } = await import('../src/lib/db');
   const { placeOrder, updateOrder, getAdminOrders, SALDO_METHOD, INSUFFICIENT_BALANCE_MESSAGE } =

@@ -58,6 +58,14 @@ function isBuilding(): boolean {
   return process.env.NEXT_PHASE === 'phase-production-build';
 }
 
+/**
+ * Los scripts de prueba (npm run test:saldo / test:checkout) trabajan sobre una
+ * base SQLite temporal: no deben restaurar ni replicar nada en Supabase.
+ */
+function syncDisabled(): boolean {
+  return process.env.NOVASTORE_DISABLE_SYNC === '1';
+}
+
 /* ------------------------------------------------------------------ */
 /* Codificación de filas                                              */
 /* ------------------------------------------------------------------ */
@@ -235,7 +243,7 @@ async function restoreAll(db: Db): Promise<void> {
 
 /** Inicia (una sola vez) la restauración desde Supabase. */
 export function ensureRestore(db: Db): Promise<void> {
-  if (isBuilding()) return Promise.resolve();
+  if (isBuilding() || syncDisabled()) return Promise.resolve();
   if (!restorePromise) {
     restorePromise = restoreAll(db).catch((error) => {
       console.warn(
@@ -320,6 +328,7 @@ async function runFlush(): Promise<void> {
  * Se llama una sola vez al abrir la base de datos.
  */
 export function attachPersistence(db: Db): void {
+  if (syncDisabled()) return;
   currentDb = db;
   const marker = db as Db & { __novastorePersistence?: boolean };
   if (marker.__novastorePersistence) return;
