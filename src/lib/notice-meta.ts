@@ -29,6 +29,17 @@ export type NoticeAnswerPayload = {
   values: { label: string; value: string }[];
 };
 
+/** Datos y aviso que quedan guardados junto al pedido. */
+export type OrderNoticeAnswer = {
+  productId: number;
+  productName: string;
+  type: NoticeType;
+  message: string;
+  deliveryTime: string;
+  values: { label: string; value: string; required: boolean }[];
+  acknowledgedAt: string;
+};
+
 export const MAX_NOTICE_FIELDS = 5;
 export const MAX_NOTICE_MESSAGE = 600;
 export const MAX_FIELD_LABEL = 60;
