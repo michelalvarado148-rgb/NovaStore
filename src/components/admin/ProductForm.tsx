@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getCategories } from '@/lib/catalog';
+import { getCategoryTree } from '@/lib/catalog';
 import { saveProductAction } from '@/app/actions/admin';
 import ImagePicker from '@/components/admin/ImagePicker';
 import type { AdminProduct } from '@/lib/admin';
@@ -14,7 +14,7 @@ export default function ProductForm({
   product?: AdminProduct;
   variants?: { id: number; name: string; price_cents: number | null; stock: number | null }[];
 }) {
-  const categories = getCategories({ includeInactive: true });
+  const categories = getCategoryTree({ includeInactive: true });
   const rows = Array.from({ length: Math.max(VARIANT_ROWS, variants.length) });
 
   return (
