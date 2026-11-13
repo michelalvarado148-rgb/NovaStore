@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import Logo from '@/components/Logo';
 import { registerAction } from '@/app/actions/auth';
 import { getCurrentUser, safeNextPath } from '@/lib/auth';
+import MaintenanceScreen from '@/components/MaintenanceScreen';
+import { isStoreClosed } from '@/lib/maintenance';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Crear cuenta' };
@@ -18,6 +20,8 @@ export default async function RegisterPage({
     phone?: string;
   }>;
 }) {
+  if (await isStoreClosed()) return <MaintenanceScreen />;
+
   const { error, next, name, email, phone } = await searchParams;
   const user = await getCurrentUser();
   const target = safeNextPath(next);

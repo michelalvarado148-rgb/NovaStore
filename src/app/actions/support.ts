@@ -1,5 +1,7 @@
 'use server';
 
+import { guardStoreOpen } from '@/lib/maintenance';
+
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin, requireUser } from '@/lib/auth';
@@ -7,6 +9,7 @@ import { sendAdminMessage, sendCustomerMessage } from '@/lib/support';
 
 /** Mensaje del cliente en su conversación privada con el administrador. */
 export async function sendSupportMessageAction(formData: FormData) {
+  await guardStoreOpen();
   const user = await requireUser('/cuenta/soporte');
   const result = sendCustomerMessage(user.id, String(formData.get('body') ?? ''));
 

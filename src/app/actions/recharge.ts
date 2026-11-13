@@ -1,5 +1,7 @@
 'use server';
 
+import { guardStoreOpen } from '@/lib/maintenance';
+
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin, requireUser } from '@/lib/auth';
@@ -10,6 +12,7 @@ import { notifyAdminNewRecharge } from '@/lib/push';
 
 /** El cliente solicita una recarga y adjunta su comprobante. */
 export async function createRechargeAction(formData: FormData) {
+  await guardStoreOpen();
   const user = await requireUser('/cuenta/saldo');
   const entry = formData.get('proof');
   const file = entry instanceof File && entry.size > 0 ? entry : null;

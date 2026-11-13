@@ -13,6 +13,8 @@ import {
   stockAvailable,
 } from '@/lib/catalog';
 import { formatPEN, statusTone } from '@/lib/format';
+import MaintenanceScreen from '@/components/MaintenanceScreen';
+import { isStoreClosed } from '@/lib/maintenance';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +25,8 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
+  if (await isStoreClosed()) return <MaintenanceScreen />;
+
   const { slug } = await params;
   const { error } = await searchParams;
   const product = getProductBySlug(slug);

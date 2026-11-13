@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
 import { getOrderForUser } from '@/lib/orders';
 import OrderNoticeAnswers from '@/components/OrderNoticeAnswers';
+import MaintenanceScreen from '@/components/MaintenanceScreen';
+import { isStoreClosed } from '@/lib/maintenance';
 import {
   ORDER_STATUS_LABELS,
   PAYMENT_STATUS_LABELS,
@@ -23,6 +25,8 @@ export default async function OrderPage({
   params: Promise<{ orderNumber: string }>;
   searchParams: Promise<{ nuevo?: string }>;
 }) {
+  if (await isStoreClosed()) return <MaintenanceScreen />;
+
   const user = await requireUser('/cuenta/pedidos');
   const { orderNumber } = await params;
   const { nuevo } = await searchParams;

@@ -1,5 +1,7 @@
 'use server';
 
+import { guardStoreOpen } from '@/lib/maintenance';
+
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import {
@@ -45,6 +47,7 @@ export async function loginAction(formData: FormData) {
 }
 
 export async function registerAction(formData: FormData) {
+  await guardStoreOpen();
   const name = String(formData.get('name') ?? '');
   const email = String(formData.get('email') ?? '').trim().toLowerCase();
   const phone = String(formData.get('phone') ?? '');

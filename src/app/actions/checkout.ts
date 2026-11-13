@@ -1,5 +1,7 @@
 'use server';
 
+import { guardStoreOpen } from '@/lib/maintenance';
+
 import { randomUUID } from 'node:crypto';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
@@ -19,6 +21,7 @@ const MAX_PROOF_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'application/pdf'];
 
 export async function placeOrderAction(formData: FormData) {
+  await guardStoreOpen();
   const user = await requireUser('/checkout');
   const paymentMethod = String(formData.get('payment_method') ?? '').trim();
   const contactEmail = String(formData.get('contact_email') ?? '').trim();

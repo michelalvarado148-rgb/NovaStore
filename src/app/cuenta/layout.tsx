@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { requireUser } from '@/lib/auth';
 import { formatPEN } from '@/lib/format';
 import { logoutAction } from '@/app/actions/session';
+import MaintenanceScreen from '@/components/MaintenanceScreen';
+import { isStoreClosed } from '@/lib/maintenance';
 
 const NAV = [
   { href: '/cuenta', label: 'Resumen' },
@@ -16,6 +18,8 @@ export default async function AccountLayout({
 }: {
   children: React.ReactNode;
 }) {
+  if (await isStoreClosed()) return <MaintenanceScreen />;
+
   const user = await requireUser('/cuenta');
 
   return (
