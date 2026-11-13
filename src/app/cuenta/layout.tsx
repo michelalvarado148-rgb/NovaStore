@@ -6,7 +6,8 @@ import { logoutAction } from '@/app/actions/session';
 const NAV = [
   { href: '/cuenta', label: 'Resumen' },
   { href: '/cuenta/pedidos', label: 'Mis pedidos' },
-  { href: '/cuenta/saldo', label: 'Mi saldo' },
+  { href: '/cuenta/saldo', label: 'Saldo y recargas' },
+  { href: '/cuenta/soporte', label: 'Soporte' },
   { href: '/cuenta/perfil', label: 'Mis datos' },
 ];
 
