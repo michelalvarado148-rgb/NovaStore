@@ -21,7 +21,8 @@ export async function placeOrderAction(formData: FormData) {
   // El pago con saldo no pide ni acepta comprobante: se cobra del saldo del cliente.
   const payingWithBalance = paymentMethod === SALDO_METHOD;
 
-  const fail = (message: string) =>
+  // `never`: corta el flujo, así TypeScript sabe que las validaciones no continúan.
+  const fail = (message: string): never =>
     redirect(`/checkout?error=${encodeURIComponent(message)}`);
 
   if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(contactEmail)) {
