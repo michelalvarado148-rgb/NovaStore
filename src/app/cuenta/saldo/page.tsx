@@ -8,6 +8,8 @@ import {
 } from '@/lib/recharge';
 import { RechargeAmountField } from '@/components/RechargeAmountField';
 import { createRechargeAction } from '@/app/actions/recharge';
+import { getPaymentQrUrl } from '@/lib/payment-qr';
+import AutoRefresh from '@/components/AutoRefresh';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Mi saldo' };
@@ -36,9 +38,12 @@ export default async function BalancePage({
     .filter((m) => m.amount_cents < 0)
     .reduce((sum, m) => sum + m.amount_cents, 0);
   const pending = recharges.filter((r) => r.status === 'pendiente').length;
+  const qrUrl = getPaymentQrUrl();
 
   return (
     <div className="space-y-5">
+      {/* El QR se actualiza solo cuando el administrador sube uno nuevo. */}
+      <AutoRefresh intervalMs={30000} />
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="panel border-purple-400/40 p-5">
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-purple-300">
@@ -83,6 +88,41 @@ export default async function BalancePage({
         </div>
 
         <div className="space-y-5 p-5">
+          <div className="rounded-2xl border border-purple-500/25 bg-slate-900/60 p-4">
+            {qrUrl ? (
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="rounded-2xl bg-white p-2.5">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={qrUrl}
+                    alt="Código QR para pagar tu recarga de saldo"
+                    width={160}
+                    height={160}
+                    className="h-40 w-40 object-contain"
+                  />
+                </div>
+                <div className="min-w-[12rem] flex-1">
+                  <p className="text-sm font-bold text-white">Escanea el QR para pagar</p>
+                  <p className="muted mt-1 text-xs">
+                    Abre Yape, Plin o la app de tu banco, escanea este código y paga el monto que
+                    ingresaste abajo. Después adjunta tu comprobante para que el administrador lo
+                    verifique.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm font-bold text-white">
+                  El QR de pago todavía no está disponible
+                </p>
+                <p className="muted mt-1 text-xs">
+                  El administrador aún no configuró su QR. Puedes pagar con los datos de los métodos
+                  de abajo y adjuntar tu comprobante.
+                </p>
+              </div>
+            )}
+          </div>
+
           {methods.length > 0 ? (
             <div className="grid gap-3 sm:grid-cols-2">
               {methods.map((m) => (
