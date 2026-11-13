@@ -21,9 +21,39 @@ import {
 import { adjustBalance, restoreStockForOrder, updateOrder } from '@/lib/orders';
 import { deleteProductNotice, saveProductNotice } from '@/lib/product-notice';
 import { clearPaymentQrUrl, savePaymentQrUrl } from '@/lib/payment-qr';
+import { saveMaintenanceConfig } from '@/lib/maintenance';
 
 function back(path: string, message: string, type: 'ok' | 'error' = 'error'): never {
   redirect(`${path}?${type}=${encodeURIComponent(message)}`);
+}
+
+/**
+ * Activa o desactiva el modo mantenimiento. Al guardar se revalida todo el
+ * sitio para que el cambio se aplique de inmediato a todos los visitantes.
+ */
+export async function saveMaintenanceAction(formData: FormData) {
+  await requireAdmin('/admin/mantenimiento');
+
+  const result = saveMaintenanceConfig({
+    enabled: String(formData.get('enabled') ?? '') === '1',
+    message: String(formData.get('message') ?? ''),
+    imageUrl: String(formData.get('image_url') ?? ''),
+    returnAt: String(formData.get('return_at') ?? ''),
+  });
+
+  if (!result.ok) {
+    back('/admin/mantenimiento', result.error);
+  }
+
+  revalidatePath('/', 'layout');
+
+  back(
+    '/admin/mantenimiento',
+    result.config.enabled
+      ? 'Modo mantenimiento activado. Los clientes ya ven la pantalla de mantenimiento.'
+      : 'Modo mantenimiento desactivado. La tienda vuelve a estar disponible.',
+    'ok',
+  );
 }
 
 function intOrNull(value: FormDataEntryValue | null): number | null {
