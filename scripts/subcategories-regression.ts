@@ -189,6 +189,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error('\n✗ Regresión de subcategorías falló:', error instanceof Error ? error.message : error);
-  process.exit(1);
+  console.error('\n✗ Regresión de subcategorías falló:', error instanceof Error ? error.stack : error);
+  process.exitCode = 1;
 });
