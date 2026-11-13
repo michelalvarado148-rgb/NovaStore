@@ -95,13 +95,18 @@ export default async function AdminMaintenancePage({
             </p>
           </div>
 
-          <ImagePicker
-            name="image_url"
-            label="Imagen o logo de mantenimiento"
-            folder="mantenimiento"
-            defaultValue={config.image_url}
-            help="Opcional. Se muestra junto al mensaje en la pantalla de mantenimiento."
-          />
+          <div>
+            <ImagePicker
+              name="image_url"
+              label="Imagen o logo de mantenimiento"
+              folder="mantenimiento"
+              defaultValue={config.image_url}
+            />
+            <p className="mt-1.5 text-xs text-slate-500">
+              Opcional. Se muestra junto al mensaje en la pantalla de mantenimiento. Puedes elegir
+              la imagen directamente desde la galería de tu celular.
+            </p>
+          </div>
 
           <div>
             <label htmlFor="maintenance_return" className="label">
