@@ -14,6 +14,7 @@ const NAV = [
   { href: '/admin/soporte', label: 'Soporte' },
   { href: '/admin/saldos', label: 'Saldos' },
   { href: '/admin/pagos', label: 'Métodos de pago' },
+  { href: '/admin/qr-pago', label: 'QR de pago' },
   { href: '/admin/backups', label: 'Copias de seguridad' },
   { href: '/admin/configuracion', label: 'Configuración' },
 ];

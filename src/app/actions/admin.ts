@@ -18,6 +18,7 @@ import {
   type VariantInput,
 } from '@/lib/admin';
 import { adjustBalance, restoreStockForOrder, updateOrder } from '@/lib/orders';
+import { clearPaymentQrUrl, savePaymentQrUrl } from '@/lib/payment-qr';
 
 function back(path: string, message: string, type: 'ok' | 'error' = 'error'): never {
   redirect(`${path}?${type}=${encodeURIComponent(message)}`);
@@ -284,4 +285,30 @@ export async function saveSettingsAction(formData: FormData) {
   saveSettings(entries);
   revalidatePath('/', 'layout');
   redirect('/admin/configuracion?ok=' + encodeURIComponent('Configuración guardada.'));
+}
+
+/* ------------------------------ QR de pago --------------------------- */
+
+export async function savePaymentQrAction(formData: FormData) {
+  await requireAdmin('/admin/qr-pago');
+  const result = savePaymentQrUrl(String(formData.get('payment_qr_url') ?? ''));
+  if (!result.ok) back('/admin/qr-pago', result.error);
+
+  revalidatePath('/admin/qr-pago');
+  revalidatePath('/cuenta/saldo');
+  redirect(
+    '/admin/qr-pago?ok=' +
+      encodeURIComponent('QR de pago guardado. Los clientes ya lo ven al añadir saldo.'),
+  );
+}
+
+export async function clearPaymentQrAction() {
+  await requireAdmin('/admin/qr-pago');
+  clearPaymentQrUrl();
+  revalidatePath('/admin/qr-pago');
+  revalidatePath('/cuenta/saldo');
+  redirect(
+    '/admin/qr-pago?ok=' +
+      encodeURIComponent('QR de pago eliminado. Los clientes verán que aún no está disponible.'),
+  );
 }

@@ -14,7 +14,8 @@
     "test:saldo": "tsx scripts/balance-checkout-regression.ts",
     "test:admin": "tsx scripts/admin-regression.ts",
     "test:security": "tsx scripts/security-regression.ts",
-    "test:bootstrap": "tsx scripts/admin-bootstrap-regression.ts"
+    "test:bootstrap": "tsx scripts/admin-bootstrap-regression.ts",
+    "test:qr": "tsx scripts/payment-qr-regression.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",
