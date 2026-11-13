@@ -1,14 +1,14 @@
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
 import CategoryCard from '@/components/CategoryCard';
-import { getActiveOffers, getCategories, getProducts, getRecentPurchases, getSettings, computePricing } from '@/lib/catalog';
+import { getActiveOffers, getProducts, getRecentPurchases, getRootCategories, getSettings, computePricing } from '@/lib/catalog';
 import { formatPEN, maskName, timeAgo } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
 export default function HomePage() {
   const settings = getSettings();
-  const categories = getCategories();
+  const categories = getRootCategories();
   const offers = getActiveOffers();
   const featured = getProducts({ featuredOnly: true, limit: 8 });
   const all = getProducts({ limit: 60 });

@@ -104,9 +104,11 @@ export async function saveCategoryAction(formData: FormData) {
     imageUrl: String(formData.get('image_url') ?? '').trim() || null,
     position: Number.parseInt(String(formData.get('position') ?? '0'), 10) || 0,
     isActive: formData.get('is_active') === 'on',
+    parentId: intOrNull(formData.get('parent_id')),
   });
   if (!result.ok) back('/admin/categorias', result.error);
   revalidatePath('/admin/categorias');
+  revalidatePath('/productos');
   revalidatePath('/');
   redirect(`/admin/categorias?ok=${encodeURIComponent('Categoría guardada.')}`);
 }

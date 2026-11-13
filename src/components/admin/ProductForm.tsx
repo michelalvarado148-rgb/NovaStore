@@ -33,7 +33,7 @@ export default function ProductForm({
             <option value="">Sin categoría</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
-                {category.name}
+                {category.depth ? `\u21b3 ${category.name} (subcategoría)` : category.name}
               </option>
             ))}
           </select>
