@@ -7,8 +7,8 @@
  *    suben al bucket público de Supabase Storage (novastore-media) y la URL
  *    pública queda guardada en products.image_url / categories.image_url.
  * 2. `database`: mientras no exista esa clave, las imágenes se guardan como
- *    binario en la tabla public.media_files de Supabase (PostgreSQL) y se
- *    sirven desde /api/media/<id>. También es almacenamiento permanente: no
+ *    registro binario en la tabla `settings` de Supabase (claves `media:*`) y
+ *    se sirven desde /api/media/<id>. También es almacenamiento permanente: no
  *    depende del navegador ni de la memoria temporal del dispositivo.
  *
  * En ambos modos la URL guardada en la base de datos es la misma para todos los
@@ -161,28 +161,19 @@ async function saveToBucket(buffer: Buffer, kind: ImageKind, folder: MediaFolder
 
 /* -------------------------- Modo base de datos ------------------------------ */
 
-let tableReady = false;
-
-async function ensureMediaTable(): Promise<void> {
-  if (tableReady) return;
-  await sbQuery(
-    `create table if not exists public.media_files (
-       id text primary key,
-       mime text not null,
-       size integer not null,
-       data bytea not null,
-       created_at text not null
-     )`,
-  );
-  tableReady = true;
-}
+// Las imágenes se guardan en la tabla `settings` de Supabase con el prefijo
+// `media:`. Es almacenamiento permanente y compartido entre dispositivos; el
+// escaparate y el sincronizador ignoran estas claves (ver catalog.ts y
+// persistence.ts) para no cargar los binarios en cada página.
+const MEDIA_PREFIX = 'media:';
 
 async function saveToDatabase(buffer: Buffer, kind: ImageKind): Promise<string> {
-  await ensureMediaTable();
   const id = randomUUID();
+  const payload = `data:${MIME_BY_KIND[kind]};base64,${buffer.toString('base64')}`;
   await sbQuery(
-    'insert into public.media_files (id, mime, size, data, created_at) values ($1, $2, $3, $4, $5)',
-    [id, MIME_BY_KIND[kind], buffer.length, buffer, new Date().toISOString()],
+    `insert into public.settings (key, value, updated_at) values ($1, $2, $3)
+     on conflict (key) do update set value = excluded.value, updated_at = excluded.updated_at`,
+    [`${MEDIA_PREFIX}${id}`, payload, new Date().toISOString()],
   );
   return `/api/media/${id}`;
 }
@@ -210,13 +201,13 @@ export type StoredImage = { mime: string; data: Buffer };
 /** Lee una imagen guardada en la base de datos (modo `database`). */
 export async function readStoredImage(id: string): Promise<StoredImage | null> {
   if (!/^[0-9a-f-]{20,40}$/i.test(id)) return null;
-  await ensureMediaTable();
-  const rows = await sbQuery<{ mime: string; data: Buffer | string }>(
-    'select mime, data from public.media_files where id = $1',
-    [id],
+  const rows = await sbQuery<{ value: string }>(
+    'select value from public.settings where key = $1',
+    [`${MEDIA_PREFIX}${id}`],
   );
   const row = rows[0];
   if (!row) return null;
-  const data = Buffer.isBuffer(row.data) ? row.data : Buffer.from(String(row.data), 'hex');
-  return { mime: row.mime, data };
+  const match = /^data:([^;]+);base64,([\s\S]*)$/.exec(String(row.value ?? ''));
+  if (!match) return null;
+  return { mime: match[1], data: Buffer.from(match[2], 'base64') };
 }
