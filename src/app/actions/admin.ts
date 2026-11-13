@@ -8,6 +8,7 @@ import {
   deleteCategory,
   deleteOffer,
   deleteProduct,
+  moveProductsToCategory,
   saveCategory,
   saveOffer,
   savePaymentMethod,
@@ -111,6 +112,21 @@ export async function saveCategoryAction(formData: FormData) {
   revalidatePath('/productos');
   revalidatePath('/');
   redirect(`/admin/categorias?ok=${encodeURIComponent('Categoría guardada.')}`);
+}
+
+export async function moveProductsAction(formData: FormData) {
+  await requireAdmin('/admin/categorias');
+  const targetCategoryId = Number(formData.get('target_category_id') ?? 0);
+  const productIds = formData.getAll('product_ids').map((value) => Number(value));
+  const result = moveProductsToCategory({ productIds, targetCategoryId });
+  revalidatePath('/admin/categorias');
+  if (!result.ok) back('/admin/categorias', result.error);
+  revalidatePath('/admin/productos');
+  revalidatePath('/productos');
+  revalidatePath('/');
+  redirect(
+    `/admin/categorias?ok=${encodeURIComponent(`${result.moved} producto(s) movido(s) correctamente.`)}`,
+  );
 }
 
 export async function deleteCategoryAction(formData: FormData) {
