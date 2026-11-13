@@ -160,6 +160,21 @@ export async function pushTable(db: Db, spec: TableSpec): Promise<void> {
   }
 }
 
+/**
+ * Replica en Supabase, de forma inmediata y esperable, las tablas indicadas.
+ * Lo usan las copias de seguridad: al restaurar hay que asegurar que Supabase
+ * queda con el estado restaurado antes de responder al administrador.
+ */
+export async function syncTablesNow(db: Db, names: string[]): Promise<void> {
+  if (!supabaseConfigured() || isBuilding()) return;
+  await persistenceReady();
+  for (const name of names) {
+    const spec = TABLES.find((item) => item.name === name);
+    if (!spec) continue;
+    await pushTable(db, spec);
+  }
+}
+
 async function restoreAll(db: Db): Promise<void> {
   if (!supabaseConfigured()) {
     console.log('[novastore] Supabase sin configurar: se usa solo la base local.');
