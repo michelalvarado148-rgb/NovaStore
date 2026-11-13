@@ -23,6 +23,7 @@ import {
   saveBackupSettings,
 } from '../src/lib/backups';
 import { getDb } from '../src/lib/db';
+import { getSettings } from '../src/lib/catalog';
 
 const ok: string[] = [];
 const fail: string[] = [];
@@ -46,39 +47,34 @@ function counts() {
 
 async function main() {
   const phase = process.argv[2] ?? 'completo';
-  await prepareBackups(db);
 
   if (phase === 'rehidratar') {
     // Simula un contenedor nuevo: se vacía el historial local y debe
     // recuperarse desde el espejo guardado en `settings` (Supabase).
-    const before = (db.prepare('SELECT COUNT(*) AS n FROM settings WHERE key LIKE ?').get('backup:row:%') as { n: number }).n;
+    const mirrored = db
+      .prepare("SELECT COUNT(*) AS n FROM settings WHERE key LIKE 'backup:row:%'")
+      .get() as { n: number };
     db.prepare('DELETE FROM backups').run();
     const afterDelete = listBackups(db).length;
 
-    // prepareBackups sólo hidrata una vez por proceso; se consulta el espejo
-    // directamente para comprobar que el historial sigue disponible.
-    const mirrored = db
-      .prepare("SELECT value FROM settings WHERE key LIKE 'backup:row:%'")
-      .all() as { value: string }[];
-    const parsed = mirrored
-      .map((row) => {
-        try {
-          return JSON.parse(row.value) as { name?: string; payload?: string; checksum?: string };
-        } catch {
-          return null;
-        }
-      })
-      .filter(Boolean);
+    await prepareBackups(db);
+    const recovered = listBackups(db);
 
-    check('el espejo en settings conserva las copias', before > 0, `filas=${before}`);
+    check('el espejo en settings conserva las copias', mirrored.n > 0, `filas=${mirrored.n}`);
     check('el historial local quedó vacío tras simular reinicio', afterDelete === 0);
     check(
-      'cada copia del espejo tiene nombre, payload y checksum',
-      parsed.length === before && parsed.every((p) => p?.name && p?.payload && p?.checksum),
-      `válidas=${parsed.length}/${before}`,
+      'el historial se recupera desde Supabase al arrancar',
+      recovered.length === mirrored.n,
+      `${recovered.length}/${mirrored.n}`,
+    );
+    check(
+      'las copias recuperadas conservan nombre y checksum',
+      recovered.every((b) => Boolean(b.name) && (b.checksum ?? '').length === 64),
     );
     return;
   }
+
+  await prepareBackups(db);
 
   // Punto de partida limpio de copias (sólo en la base temporal).
   db.prepare('DELETE FROM backups').run();
@@ -132,7 +128,7 @@ async function main() {
   const victimProducts = db
     .prepare('SELECT id FROM products ORDER BY id DESC LIMIT 3')
     .all() as { id: number }[];
-  for (const row of victimProducts) db.prepare('DELETE FROM products WHERE id = ?').run();
+  for (const row of victimProducts) db.prepare('DELETE FROM products WHERE id = ?').run(row.id);
   db.prepare('DELETE FROM categories WHERE id = (SELECT MAX(id) FROM categories)').run();
   const damaged = counts();
   check('se simula el borrado de datos', damaged.products < start.products, `${damaged.products}/${start.products}`);
@@ -202,10 +198,12 @@ async function main() {
     .get() as { n: number };
   check('las copias se espejan en settings (Supabase)', mirrored.n > 0, `${mirrored.n} claves`);
 
-  const leaked = db
-    .prepare("SELECT COUNT(*) AS n FROM settings WHERE key LIKE 'backup:%'")
-    .get() as { n: number };
-  check('los ajustes internos no se mezclan con los de la tienda', leaked.n > 0);
+  const storeSettings = getSettings();
+  check(
+    'los ajustes internos no se mezclan con los de la tienda',
+    Object.keys(storeSettings).every((key) => !key.startsWith('backup:')),
+    `${Object.keys(storeSettings).length} ajustes visibles`,
+  );
 }
 
 main()
