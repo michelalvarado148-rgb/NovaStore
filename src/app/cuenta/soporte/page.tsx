@@ -1,4 +1,3 @@
-import type { Metadata } from 'next';
 import { requireUser } from '@/lib/auth';
 import { formatDateTime } from '@/lib/format';
 import {
@@ -9,10 +8,9 @@ import {
 } from '@/lib/support';
 import { sendSupportMessageAction } from '@/app/actions/support';
 import AutoRefresh from '@/components/AutoRefresh';
-import { Card, EmptyState, PageHeader } from '@/components/ui';
 
-export const metadata: Metadata = { title: 'Soporte | NOVASTORE' };
 export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Soporte' };
 
 export default async function SupportPage({
   searchParams,
@@ -27,11 +25,14 @@ export default async function SupportPage({
   if (thread) markThreadRead(thread.id, 'customer');
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Soporte"
-        description="Conversación privada con el administrador de NOVASTORE. Solo tú y el administrador pueden leer estos mensajes."
-      />
+    <div className="space-y-5">
+      <div className="panel p-5">
+        <h1 className="text-sm font-bold uppercase tracking-[0.14em] text-purple-200">Soporte</h1>
+        <p className="muted mt-1 text-xs">
+          Conversación privada con el administrador. Solo tú y el administrador pueden leer estos
+          mensajes.
+        </p>
+      </div>
 
       {sp.ok ? (
         <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
@@ -46,18 +47,20 @@ export default async function SupportPage({
 
       <AutoRefresh intervalMs={10000} />
 
-      <Card>
-        <div id="conversacion" className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold text-white">Tu conversación</h2>
-            <span className="badge badge-info">Privada</span>
-          </div>
+      <section id="conversacion" className="panel overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 p-5">
+          <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-purple-200">
+            Tu conversación
+          </h2>
+          <span className="badge badge-info">Privada</span>
+        </div>
 
+        <div className="space-y-4 p-5">
           {messages.length === 0 ? (
-            <EmptyState
-              title="Aún no hay mensajes"
-              description="Escribe tu primera consulta y el administrador te responderá por este mismo chat."
-            />
+            <p className="text-sm text-slate-400">
+              Aún no hay mensajes. Escribe tu primera consulta y el administrador te responderá por
+              este mismo chat.
+            </p>
           ) : (
             <ul className="space-y-3">
               {messages.map((m) => {
@@ -82,7 +85,10 @@ export default async function SupportPage({
             </ul>
           )}
 
-          <form action={sendSupportMessageAction} className="space-y-3 border-t border-purple-500/15 pt-4">
+          <form
+            action={sendSupportMessageAction}
+            className="space-y-3 border-t border-white/5 pt-4"
+          >
             <label className="block text-sm text-slate-300">
               Escribe tu mensaje
               <textarea
@@ -99,7 +105,7 @@ export default async function SupportPage({
             </button>
           </form>
         </div>
-      </Card>
+      </section>
     </div>
   );
 }
