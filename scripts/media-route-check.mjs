@@ -111,6 +111,19 @@ try {
     `http=${notImage.status} ${notImageJson.error ?? ''}`,
   );
 
+  for (const [section, page] of [
+    ['Productos', '/admin/productos/nuevo'],
+    ['Categorías', '/admin/categorias'],
+  ]) {
+    const response = await fetch(`${BASE}${page}`, { headers: cookie, redirect: 'manual' });
+    const html = await response.text();
+    check(
+      `muestra el selector de galería en ${section}`,
+      response.status === 200 && html.includes('Seleccionar imagen de galería'),
+      `http=${response.status}`,
+    );
+  }
+
   if (uploadJson.url) {
     const served = await fetch(`${BASE}${uploadJson.url}`);
     const bytes = Buffer.from(await served.arrayBuffer());
