@@ -7,6 +7,21 @@ import { maskName } from './format';
 export type OrderStatus = 'pendiente' | 'en_proceso' | 'entregado' | 'rechazado' | 'cancelado';
 export type PaymentStatus = 'pendiente' | 'verificado' | 'rechazado';
 
+/** Código del método de pago que usa el saldo a favor del cliente. */
+export const SALDO_METHOD = 'saldo';
+
+/** Mensaje único cuando el saldo no alcanza; se muestra tal cual en el checkout. */
+export const INSUFFICIENT_BALANCE_MESSAGE =
+  'No tienes saldo suficiente para realizar esta compra. Recarga tu saldo para continuar';
+
+/** Se lanza dentro de la transacción para revertir el pedido si el saldo no alcanza. */
+class InsufficientBalanceError extends Error {
+  constructor() {
+    super('saldo-insuficiente');
+    this.name = 'InsufficientBalanceError';
+  }
+}
+
 export type OrderSummary = {
   id: number;
   order_number: string;
@@ -124,7 +139,7 @@ export function placeOrder(input: PlaceOrderInput): PlaceOrderResult {
     }
   }
 
-  if (method.code !== 'saldo' && !input.proof) {
+  if (method.code !== SALDO_METHOD && !input.proof) {
     return {
       ok: false,
       error: 'Adjunta la imagen de tu comprobante de pago para continuar.',
@@ -132,17 +147,24 @@ export function placeOrder(input: PlaceOrderInput): PlaceOrderResult {
   }
 
   const total = cart.subtotal_cents;
+  if (!Number.isFinite(total) || total <= 0) {
+    return { ok: false, error: 'El total del pedido no es válido.' };
+  }
+
   const user = db
     .prepare('SELECT id, balance_cents FROM users WHERE id = ?')
     .get(input.userId) as { id: number; balance_cents: number } | undefined;
   if (!user) return { ok: false, error: 'Tu sesión expiró. Vuelve a iniciar sesión.' };
 
-  if (method.code === 'saldo' && user.balance_cents < total) {
-    return { ok: false, error: 'Tu saldo disponible no cubre el total del pedido.' };
+  const payingWithBalance = method.code === SALDO_METHOD;
+  if (payingWithBalance && user.balance_cents < total) {
+    return { ok: false, error: INSUFFICIENT_BALANCE_MESSAGE };
   }
 
   const now = nowIso();
   const orderNumber = generateOrderNumber();
+  // El pago con saldo se cobra en el acto: el pedido nace con el pago ya verificado.
+  const initialPaymentStatus: PaymentStatus = payingWithBalance ? 'verificado' : 'pendiente';
 
   const createTx = db.transaction(() => {
     const info = db
@@ -150,13 +172,14 @@ export function placeOrder(input: PlaceOrderInput): PlaceOrderResult {
         `INSERT INTO orders (order_number, idempotency_key, user_id, status, payment_method,
            payment_status, subtotal_cents, discount_cents, total_cents, contact_email,
            contact_phone, customer_note, created_at, updated_at)
-         VALUES (?, ?, ?, 'pendiente', ?, 'pendiente', ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, 'pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         orderNumber,
         input.idempotencyKey,
         input.userId,
         method.code,
+        initialPaymentStatus,
         cart.subtotal_cents,
         cart.savings_cents,
         total,
@@ -222,11 +245,17 @@ export function placeOrder(input: PlaceOrderInput): PlaceOrderResult {
       );
     }
 
-    if (method.code === 'saldo') {
-      db.prepare('UPDATE users SET balance_cents = balance_cents - ? WHERE id = ?').run(
-        total,
-        input.userId,
-      );
+    if (payingWithBalance) {
+      // Descuento atómico y condicional: solo se aplica si el saldo real alcanza el total.
+      // Si otra compra simultánea consumió el saldo, changes === 0 y se revierte todo el pedido.
+      const debit = db
+        .prepare(
+          'UPDATE users SET balance_cents = balance_cents - ?, updated_at = ? WHERE id = ? AND balance_cents >= ?',
+        )
+        .run(total, now, input.userId, total);
+      if (debit.changes !== 1) {
+        throw new InsufficientBalanceError();
+      }
       db.prepare(
         `INSERT INTO balance_movements (user_id, amount_cents, type, description, order_id, created_by, created_at)
          VALUES (?, ?, 'compra', ?, ?, NULL, ?)`,
@@ -240,6 +269,9 @@ export function placeOrder(input: PlaceOrderInput): PlaceOrderResult {
   try {
     createTx();
   } catch (error) {
+    if (error instanceof InsufficientBalanceError) {
+      return { ok: false, error: INSUFFICIENT_BALANCE_MESSAGE };
+    }
     const message = error instanceof Error ? error.message : 'Error desconocido';
     if (message.includes('UNIQUE') && message.includes('idempotency')) {
       const dup = db
@@ -440,8 +472,9 @@ export function updateOrder(input: UpdateOrderInput): { ok: true } | { ok: false
       }
     }
 
-    const paidWithBalance = order.payment_method === 'saldo';
-    if (paidWithBalance && nextPayment === 'rechazado' && order.payment_status !== 'rechazado') {
+    const paidWithBalance = order.payment_method === SALDO_METHOD;
+    // Reembolso único al rechazar el pago o cerrar (rechazar/cancelar) un pedido pagado con saldo.
+    if (paidWithBalance && (isClosed || nextPayment === 'rechazado')) {
       const alreadyRefunded = db
         .prepare("SELECT 1 FROM balance_movements WHERE order_id = ? AND type = 'reembolso'")
         .get(order.id);
@@ -524,6 +557,13 @@ export function adjustBalance(input: {
   });
   tx();
   return { ok: true };
+}
+
+export function getUserBalance(userId: number): number {
+  const row = getDb()
+    .prepare('SELECT balance_cents FROM users WHERE id = ?')
+    .get(userId) as { balance_cents: number } | undefined;
+  return row?.balance_cents ?? 0;
 }
 
 export function getBalanceMovements(userId?: number, limit = 100): BalanceMovement[] {
