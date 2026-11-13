@@ -3,9 +3,8 @@ import { adjustBalance } from './orders';
 
 export type RechargeStatus = 'pendiente' | 'aprobado' | 'rechazado';
 
-/** Monto mínimo y máximo aceptado en una solicitud de recarga (en centavos). */
-export const RECHARGE_MIN_CENTS = 500;
-export const RECHARGE_MAX_CENTS = 200000;
+/** Monto mínimo aceptado en una solicitud de recarga (en centavos). No hay monto máximo. */
+export const RECHARGE_MIN_CENTS = 1000;
 export const MAX_PROOF_BYTES = 5 * 1024 * 1024;
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 
@@ -102,13 +101,9 @@ export async function createRechargeRequest(input: {
   if (amount < RECHARGE_MIN_CENTS) {
     return {
       ok: false,
-      error: `El monto mínimo de recarga es S/ ${(RECHARGE_MIN_CENTS / 100).toFixed(2)}.`,
-    };
-  }
-  if (amount > RECHARGE_MAX_CENTS) {
-    return {
-      ok: false,
-      error: `El monto máximo por solicitud es S/ ${(RECHARGE_MAX_CENTS / 100).toFixed(2)}.`,
+      error: `El monto mínimo de recarga es S/ ${(RECHARGE_MIN_CENTS / 100).toFixed(2)}. Ingresa S/ ${(
+        RECHARGE_MIN_CENTS / 100
+      ).toFixed(2)} o más.`,
     };
   }
 
