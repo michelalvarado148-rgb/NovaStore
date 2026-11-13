@@ -23,7 +23,7 @@ RUN npm run build
 # ---------- Etapa 3: ejecución ----------
 FROM node:24-alpine AS runner
 WORKDIR /app
-RUN apk upgrade --no-cache
+RUN echo "os-refresh 2026-11-13" && apk upgrade --no-cache
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
