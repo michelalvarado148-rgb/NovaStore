@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { listAdminProducts } from '@/lib/admin';
+import { getNoticeConfigMap } from '@/lib/product-notice';
 import { deleteProductAction } from '@/app/actions/admin';
 import { formatPEN } from '@/lib/format';
 
@@ -13,6 +14,7 @@ export default async function AdminProductsPage({
 }) {
   const params = await searchParams;
   const products = listAdminProducts();
+  const noticeMap = getNoticeConfigMap();
 
   return (
     <div className="space-y-4">
@@ -48,7 +50,14 @@ export default async function AdminProductsPage({
                       <img src={product.image_url} alt="" className="h-9 w-9 rounded-lg object-cover" />
                     ) : null}
                     <div>
-                      <p className="font-semibold text-white">{product.name}</p>
+                      <p className="font-semibold text-white">
+                        {product.name}
+                        {noticeMap.get(product.id)?.enabled ? (
+                          <span className="ml-1.5 rounded-full border border-fuchsia-500/40 bg-fuchsia-500/10 px-1.5 py-0.5 align-middle text-[0.6rem] font-bold text-fuchsia-200">
+                            AVISO
+                          </span>
+                        ) : null}
+                      </p>
                       <p className="text-[0.7rem] text-slate-500">
                         {product.sold_count} vendidos {product.is_featured ? '· destacado' : ''}
                       </p>

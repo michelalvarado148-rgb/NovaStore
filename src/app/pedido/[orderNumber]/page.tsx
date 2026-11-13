@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
 import { getOrderForUser } from '@/lib/orders';
+import OrderNoticeAnswers from '@/components/OrderNoticeAnswers';
 import {
   ORDER_STATUS_LABELS,
   PAYMENT_STATUS_LABELS,
@@ -158,6 +159,8 @@ export default async function OrderPage({
                 <p className="mt-2 text-xs text-slate-400">Nota: {order.customer_note}</p>
               ) : null}
             </div>
+
+            <OrderNoticeAnswers orderNumber={order.order_number} />
           </div>
 
           <aside className="space-y-3">

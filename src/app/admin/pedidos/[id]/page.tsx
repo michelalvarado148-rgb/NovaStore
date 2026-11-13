@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getOrderById } from '@/lib/orders';
 import { restoreStockAction, updateOrderAction } from '@/app/actions/admin';
+import OrderNoticeAnswers from '@/components/OrderNoticeAnswers';
 import {
   ORDER_STATUS_LABELS,
   PAYMENT_STATUS_LABELS,
@@ -100,6 +101,10 @@ export default async function AdminOrderDetailPage({
             {order.customer_note ? (
               <p className="mt-1 text-slate-400">Nota del cliente: {order.customer_note}</p>
             ) : null}
+          </div>
+
+          <div className="mt-4">
+            <OrderNoticeAnswers orderNumber={order.order_number} />
           </div>
 
           <div className="mt-4">
