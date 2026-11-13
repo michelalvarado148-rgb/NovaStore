@@ -96,6 +96,20 @@ function decodeRow(spec: TableSpec, row: Row): Row {
   return out;
 }
 
+/**
+ * Claves de `settings` que no se sincronizan con la base local: `media:*`
+ * guarda las imágenes subidas desde el panel (binarios que se leen directamente
+ * de Supabase). Se excluyen del empuje y del borrado remoto para no eliminarlas
+ * al sincronizar el resto de ajustes.
+ */
+const SKIPPED_SETTINGS_PREFIXES = ['media:'];
+
+function isSkippedKey(spec: TableSpec, key: unknown): boolean {
+  if (spec.name !== 'settings') return false;
+  const value = String(key ?? '');
+  return SKIPPED_SETTINGS_PREFIXES.some((prefix) => value.startsWith(prefix));
+}
+
 function localColumns(db: Db, table: string): string[] {
   return (db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).map((c) => c.name);
 }
@@ -137,7 +151,9 @@ function upsertLocal(db: Db, spec: TableSpec, rows: Row[]): number {
 
 /** Sube una tabla local completa y elimina en Supabase lo que ya no existe. */
 export async function pushTable(db: Db, spec: TableSpec): Promise<void> {
-  const rows = (db.prepare(`SELECT * FROM ${spec.name}`).all() as Row[]).map((row) => encodeRow(spec, row));
+  const rows = (db.prepare(`SELECT * FROM ${spec.name}`).all() as Row[])
+    .map((row) => encodeRow(spec, row))
+    .filter((row) => !isSkippedKey(spec, row[spec.pk]));
 
   for (let index = 0; index < rows.length; index += CHUNK) {
     await sbUpsert(spec.name, rows.slice(index, index + CHUNK), spec.pk);
@@ -147,7 +163,8 @@ export async function pushTable(db: Db, spec: TableSpec): Promise<void> {
   const localKeys = new Set(rows.map((row) => String(row[spec.pk])));
   const stale = remote
     .map((row) => row[spec.pk] as string | number)
-    .filter((value) => !localKeys.has(String(value)));
+    .filter((value) => !localKeys.has(String(value)))
+    .filter((value) => !isSkippedKey(spec, value));
   if (stale.length > 0) {
     await sbDeleteIn(spec.name, spec.pk, stale);
   }
@@ -194,7 +211,9 @@ async function restoreAll(db: Db): Promise<void> {
   let uploaded = 0;
   for (const spec of TABLES) {
     try {
-      const remote = await sbSelect<Row>(spec.name);
+      const remote = (await sbSelect<Row>(spec.name)).filter(
+        (row) => !isSkippedKey(spec, row[spec.pk]),
+      );
       if (remote.length === 0) {
         await pushTable(db, spec);
         uploaded += 1;
