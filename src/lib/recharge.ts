@@ -34,6 +34,24 @@ export type RechargeReviewResult = { ok: true } | { ok: false; error: string };
 const COLS = `id, user_id, amount_cents, method, reference, note, status, admin_note,
   file_name, mime_type, size_bytes, (data IS NOT NULL) AS has_proof, created_at, reviewed_at`;
 
+export type RechargeMethod = {
+  code: string;
+  name: string;
+  account_info: string;
+  instructions: string;
+};
+
+/** Métodos con los que el cliente puede recargar saldo (el propio saldo queda fuera). */
+export function getRechargeMethods(): RechargeMethod[] {
+  return getDb()
+    .prepare(
+      `SELECT code, name, account_info, instructions FROM payment_methods
+        WHERE is_enabled = 1 AND code <> 'saldo'
+        ORDER BY position, id`,
+    )
+    .all() as RechargeMethod[];
+}
+
 export function getMyRecharges(userId: number, limit = 50): RechargeRow[] {
   return getDb()
     .prepare(`SELECT ${COLS} FROM recharge_requests WHERE user_id = ? ORDER BY id DESC LIMIT ?`)
