@@ -181,6 +181,50 @@ CREATE TABLE IF NOT EXISTS balance_movements (
 );
 CREATE INDEX IF NOT EXISTS idx_movements_user ON balance_movements(user_id);
 
+CREATE TABLE IF NOT EXISTS recharge_requests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount_cents INTEGER NOT NULL CHECK (amount_cents > 0),
+  method TEXT NOT NULL,
+  reference TEXT,
+  note TEXT,
+  status TEXT NOT NULL DEFAULT 'pendiente'
+    CHECK (status IN ('pendiente', 'aprobado', 'rechazado')),
+  admin_note TEXT,
+  reviewed_by INTEGER REFERENCES users(id),
+  reviewed_at TEXT,
+  file_name TEXT,
+  mime_type TEXT,
+  size_bytes INTEGER,
+  data BLOB,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_recharge_user ON recharge_requests(user_id);
+CREATE INDEX IF NOT EXISTS idx_recharge_status ON recharge_requests(status);
+
+CREATE TABLE IF NOT EXISTS support_threads (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  subject TEXT NOT NULL DEFAULT 'Consulta de soporte',
+  status TEXT NOT NULL DEFAULT 'abierto' CHECK (status IN ('abierto', 'cerrado')),
+  last_message_at TEXT NOT NULL,
+  last_message_by TEXT,
+  admin_unread INTEGER NOT NULL DEFAULT 0,
+  user_unread INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS support_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  thread_id INTEGER NOT NULL REFERENCES support_threads(id) ON DELETE CASCADE,
+  sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  sender_role TEXT NOT NULL CHECK (sender_role IN ('customer', 'admin')),
+  body TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  read_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_support_messages_thread ON support_messages(thread_id);
+
 CREATE TABLE IF NOT EXISTS payment_methods (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   code TEXT NOT NULL UNIQUE,
