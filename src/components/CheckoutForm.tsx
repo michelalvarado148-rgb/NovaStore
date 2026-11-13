@@ -40,11 +40,31 @@ export default function CheckoutForm({
   );
   const canContinue = ack && missing.length === 0;
 
+  function openNotice() {
+    setAck(false);
+    setOpen(true);
+  }
+
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     if (notices.length === 0 || confirmed.current) return;
     event.preventDefault();
-    setAck(false);
-    setOpen(true);
+    openNotice();
+  }
+
+  /**
+   * Abre el aviso al pulsar «Confirmar pedido».
+   *
+   * Se intercepta el clic del botón de envío (no solo el evento submit) porque
+   * los formularios con acción de servidor no siempre propagan el submit al
+   * manejador de React: así el aviso aparece siempre antes de enviar la compra.
+   */
+  function handleClickCapture(event: React.MouseEvent<HTMLFormElement>) {
+    const target = event.target as HTMLElement | null;
+    const button = target?.closest('button');
+    if (!button || button.type !== 'submit') return;
+    if (notices.length === 0 || confirmed.current) return;
+    event.preventDefault();
+    openNotice();
   }
 
   function confirm() {
@@ -65,7 +85,13 @@ export default function CheckoutForm({
   }
 
   return (
-    <form ref={formRef} action={placeOrderAction} onSubmit={handleSubmit} className={className}>
+    <form
+      ref={formRef}
+      action={placeOrderAction}
+      onSubmit={handleSubmit}
+      onClickCapture={handleClickCapture}
+      className={className}
+    >
       {children}
       <input ref={answersRef} type="hidden" name="notice_answers" defaultValue="" />
 
