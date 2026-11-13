@@ -114,7 +114,7 @@ export function setSetting(key: string, value: string): void {
 export function getCategories(options?: { includeInactive?: boolean }): Category[] {
   const db = getDb();
   const where = options?.includeInactive ? '' : 'WHERE c.is_active = 1';
-  return db
+  const rows = db
     .prepare(
       `SELECT c.*, (SELECT COUNT(*) FROM products p
                      WHERE p.category_id = c.id AND p.is_active = 1) AS product_count
