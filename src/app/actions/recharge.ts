@@ -5,16 +5,20 @@ import { revalidatePath } from 'next/cache';
 import { requireAdmin, requireUser } from '@/lib/auth';
 import { centsFromInput } from '@/lib/format';
 import { createRechargeRequest, reviewRechargeRequest } from '@/lib/recharge';
+import { getPaymentMethods } from '@/lib/catalog';
+import { notifyAdminNewRecharge } from '@/lib/push';
 
 /** El cliente solicita una recarga y adjunta su comprobante. */
 export async function createRechargeAction(formData: FormData) {
   const user = await requireUser('/cuenta/saldo');
   const entry = formData.get('proof');
   const file = entry instanceof File && entry.size > 0 ? entry : null;
+  const amountCents = centsFromInput(formData.get('amount'));
+  const methodCode = String(formData.get('method') ?? '').trim();
 
   const result = await createRechargeRequest({
     userId: user.id,
-    amountCents: centsFromInput(formData.get('amount')),
+    amountCents,
     method: String(formData.get('method') ?? ''),
     reference: String(formData.get('reference') ?? ''),
     note: String(formData.get('note') ?? ''),
@@ -23,6 +27,18 @@ export async function createRechargeAction(formData: FormData) {
 
   if (!result.ok) {
     redirect(`/cuenta/saldo?error=${encodeURIComponent(result.error)}#recarga`);
+  }
+
+  // Aviso al administrador; si el push falla, la solicitud sigue registrada.
+  try {
+    const methodName =
+      getPaymentMethods(true).find((item) => item.code === methodCode)?.name ?? 'Pago';
+    await notifyAdminNewRecharge({ id: result.id, amountCents, methodName });
+  } catch (error) {
+    console.warn(
+      '[novastore] no se pudo enviar la notificación push de la recarga:',
+      error instanceof Error ? error.message : String(error),
+    );
   }
 
   revalidatePath('/cuenta/saldo');

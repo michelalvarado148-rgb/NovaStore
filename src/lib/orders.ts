@@ -99,7 +99,14 @@ export type PlaceOrderInput = {
 };
 
 export type PlaceOrderResult =
-  | { ok: true; orderNumber: string; duplicated: boolean }
+  | {
+      ok: true;
+      orderNumber: string;
+      totalCents: number;
+      paymentMethod: string;
+      hasProof: boolean;
+      duplicated: boolean;
+    }
   | { ok: false; error: string };
 
 export function placeOrder(input: PlaceOrderInput): PlaceOrderResult {
@@ -109,7 +116,15 @@ export function placeOrder(input: PlaceOrderInput): PlaceOrderResult {
     .prepare('SELECT order_number FROM orders WHERE idempotency_key = ?')
     .get(input.idempotencyKey) as { order_number: string } | undefined;
   if (existing) {
-    return { ok: true, orderNumber: existing.order_number, duplicated: true };
+    // Pedido repetido: se devuelve el número ya creado y no se notifica de nuevo.
+    return {
+      ok: true,
+      orderNumber: existing.order_number,
+      totalCents: 0,
+      paymentMethod: '',
+      hasProof: false,
+      duplicated: true,
+    };
   }
 
   const methods = getPaymentMethods(true);
@@ -277,12 +292,28 @@ export function placeOrder(input: PlaceOrderInput): PlaceOrderResult {
       const dup = db
         .prepare('SELECT order_number FROM orders WHERE idempotency_key = ?')
         .get(input.idempotencyKey) as { order_number: string } | undefined;
-      if (dup) return { ok: true, orderNumber: dup.order_number, duplicated: true };
+      if (dup) {
+        return {
+          ok: true,
+          orderNumber: dup.order_number,
+          totalCents: 0,
+          paymentMethod: '',
+          hasProof: false,
+          duplicated: true,
+        };
+      }
     }
     return { ok: false, error: 'No pudimos registrar tu pedido. Intenta nuevamente.' };
   }
 
-  return { ok: true, orderNumber, duplicated: false };
+  return {
+    ok: true,
+    orderNumber,
+    totalCents: total,
+    paymentMethod: method.code,
+    hasProof: Boolean(input.proof),
+    duplicated: false,
+  };
 }
 
 export function getUserOrders(userId: number): OrderSummary[] {

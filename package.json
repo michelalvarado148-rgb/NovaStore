@@ -15,7 +15,8 @@
     "test:admin": "tsx scripts/admin-regression.ts",
     "test:security": "tsx scripts/security-regression.ts",
     "test:bootstrap": "tsx scripts/admin-bootstrap-regression.ts",
-    "test:qr": "tsx scripts/payment-qr-regression.ts"
+    "test:qr": "tsx scripts/payment-qr-regression.ts",
+    "test:push": "tsx scripts/push-regression.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",

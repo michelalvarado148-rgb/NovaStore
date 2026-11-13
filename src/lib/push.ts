@@ -282,7 +282,6 @@ export async function sendAdminPush(
 }
 
 export function buildOrderNotification(input: {
-  orderId: number;
   orderNumber: string;
   totalCents: number;
   methodName?: string;
@@ -290,12 +289,12 @@ export function buildOrderNotification(input: {
   const parts = [`Pedido ${input.orderNumber}`, formatPEN(input.totalCents)];
   if (input.methodName) parts.push(input.methodName);
   return {
-    key: `pedido:${input.orderId}`,
+    key: `pedido:${input.orderNumber}`,
     kind: 'pedido',
     title: '🛒 NUEVO PEDIDO',
     body: `Un cliente acaba de realizar una compra. ${parts.join(' · ')}`,
     url: `/admin/pedidos?q=${encodeURIComponent(input.orderNumber)}`,
-    tag: `pedido-${input.orderId}`,
+    tag: `pedido-${input.orderNumber}`,
   };
 }
 
@@ -318,24 +317,22 @@ export function buildRechargeNotification(input: {
 }
 
 export function buildProofNotification(input: {
-  orderId: number;
   orderNumber: string;
   totalCents: number;
 }): AdminPushEvent {
   return {
-    key: `comprobante:${input.orderId}`,
+    key: `comprobante:${input.orderNumber}`,
     kind: 'comprobante',
     title: '💳 NUEVO COMPROBANTE',
     body: `Un cliente ha enviado un comprobante de pago. Pedido ${input.orderNumber} · ${formatPEN(
       input.totalCents,
     )} · Requiere revisión.`,
     url: '/admin/comprobantes',
-    tag: `comprobante-${input.orderId}`,
+    tag: `comprobante-${input.orderNumber}`,
   };
 }
 
 export async function notifyAdminNewOrder(input: {
-  orderId: number;
   orderNumber: string;
   totalCents: number;
   methodName?: string;
@@ -352,7 +349,6 @@ export async function notifyAdminNewRecharge(input: {
 }
 
 export async function notifyAdminNewProof(input: {
-  orderId: number;
   orderNumber: string;
   totalCents: number;
 }): Promise<PushSendResult> {

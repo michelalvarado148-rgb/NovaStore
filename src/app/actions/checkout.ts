@@ -7,6 +7,7 @@ import { requireUser } from '@/lib/auth';
 import { getCart } from '@/lib/cart';
 import { getPaymentMethods } from '@/lib/catalog';
 import { SALDO_METHOD, placeOrder, type ProofInput } from '@/lib/orders';
+import { notifyAdminNewOrder, notifyAdminNewProof } from '@/lib/push';
 
 const MAX_PROOF_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'application/pdf'];
@@ -77,6 +78,29 @@ export async function placeOrderAction(formData: FormData) {
   revalidatePath('/', 'layout');
   if (!result.ok) {
     redirect(`/checkout?error=${encodeURIComponent(result.error)}`);
+  }
+
+  // Aviso al teléfono del administrador. Un pedido repetido no vuelve a notificar
+  // y un fallo de push nunca impide registrar la compra.
+  if (!result.duplicated) {
+    try {
+      await notifyAdminNewOrder({
+        orderNumber: result.orderNumber,
+        totalCents: result.totalCents,
+        methodName: method.name,
+      });
+      if (result.hasProof) {
+        await notifyAdminNewProof({
+          orderNumber: result.orderNumber,
+          totalCents: result.totalCents,
+        });
+      }
+    } catch (error) {
+      console.warn(
+        '[novastore] no se pudo enviar la notificación push del pedido:',
+        error instanceof Error ? error.message : String(error),
+      );
+    }
   }
   redirect(`/pedido/${result.orderNumber}?nuevo=1`);
 }

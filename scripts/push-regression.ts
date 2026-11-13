@@ -55,12 +55,11 @@ async function main() {
 
   // 4. Payloads con importes y deep link
   const order = push.buildOrderNotification({
-    orderId: 7,
     orderNumber: 'NV-260101-ABC123',
     totalCents: 2500,
     methodName: 'Yape',
   });
-  assert.equal(order.key, 'pedido:7');
+  assert.equal(order.key, 'pedido:NV-260101-ABC123');
   assert.equal(order.title, '🛒 NUEVO PEDIDO');
   assert.ok(order.body.includes('NV-260101-ABC123'));
   assert.ok(order.body.includes(formatPEN(2500)));
@@ -79,11 +78,10 @@ async function main() {
   assert.equal(recharge.url, '/admin/recargas?estado=pendiente');
 
   const proof = push.buildProofNotification({
-    orderId: 7,
     orderNumber: 'NV-260101-ABC123',
     totalCents: 2500,
   });
-  assert.equal(proof.key, 'comprobante:7');
+  assert.equal(proof.key, 'comprobante:NV-260101-ABC123');
   assert.equal(proof.title, '💳 NUEVO COMPROBANTE');
   assert.ok(proof.body.includes('Requiere revisión'));
   assert.equal(proof.url, '/admin/comprobantes');
