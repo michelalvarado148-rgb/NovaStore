@@ -224,6 +224,38 @@ function countSubcategories(categoryId: number): number {
   return row.total;
 }
 
+/** Niveles máximos del árbol (0 = categoría principal). */
+const MAX_CATEGORY_DEPTH = 3;
+
+function childIds(categoryId: number): number[] {
+  const rows = getDb()
+    .prepare("SELECT key FROM settings WHERE key LIKE 'cat_parent:%' AND value = ?")
+    .all(String(categoryId)) as { key: string }[];
+  return rows
+    .map((row) => Number(row.key.slice(CATEGORY_PARENT_PREFIX.length)))
+    .filter((id) => Number.isInteger(id) && id > 0);
+}
+
+/** Profundidad de una categoría contando sus ancestros. */
+function categoryDepth(categoryId: number): number {
+  let depth = 0;
+  let current = readParentId(categoryId);
+  const seen = new Set<number>([categoryId]);
+  while (current !== null && !seen.has(current)) {
+    seen.add(current);
+    depth += 1;
+    current = readParentId(current);
+  }
+  return depth;
+}
+
+/** Altura del subárbol que cuelga de una categoría. */
+function subtreeHeight(categoryId: number): number {
+  const children = childIds(categoryId);
+  if (children.length === 0) return 0;
+  return 1 + Math.max(...children.map((id) => subtreeHeight(id)));
+}
+
 export function saveCategory(input: {
   id?: number;
   name: string;
@@ -255,14 +287,29 @@ export function saveCategory(input: {
     if (!parent) {
       return { ok: false, error: 'La categoría principal seleccionada no existe.' };
     }
-    if (readParentId(parentId) !== null) {
-      return { ok: false, error: 'Solo se permiten dos niveles: elige una categoría principal.' };
-    }
-    if (input.id && countSubcategories(input.id) > 0) {
-      return {
-        ok: false,
-        error: 'Esa categoría tiene subcategorías; no puede convertirse en subcategoría.',
-      };
+    if (readParentId(parentId) !== null || true) {
+      // Se permiten varios niveles: hay que evitar ciclos y respetar el máximo.
+      if (input.id) {
+        let current: number | null = parentId;
+        const seen = new Set<number>();
+        while (current !== null && !seen.has(current)) {
+          if (current === input.id) {
+            return {
+              ok: false,
+              error: 'Esa categoría no puede depender de sí misma ni de una de sus subcategorías.',
+            };
+          }
+          seen.add(current);
+          current = readParentId(current);
+        }
+      }
+      const height = input.id ? subtreeHeight(input.id) : 0;
+      if (categoryDepth(parentId) + 1 + height > MAX_CATEGORY_DEPTH) {
+        return {
+          ok: false,
+          error: `Solo se permiten ${MAX_CATEGORY_DEPTH + 1} niveles de categorías.`,
+        };
+      }
     }
   }
 
