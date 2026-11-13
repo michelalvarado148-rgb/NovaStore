@@ -41,7 +41,13 @@ export async function POST(request: Request) {
 
   const folderRaw = form.get('folder');
   const folder: MediaFolder =
-    folderRaw === 'categorias' ? 'categorias' : folderRaw === 'pagos' ? 'pagos' : 'productos';
+    folderRaw === 'categorias'
+      ? 'categorias'
+      : folderRaw === 'pagos'
+        ? 'pagos'
+        : folderRaw === 'mantenimiento'
+          ? 'mantenimiento'
+          : 'productos';
 
   try {
     const saved = await saveImage(buffer, validation.kind, folder);

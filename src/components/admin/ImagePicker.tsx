@@ -58,7 +58,7 @@ export default function ImagePicker({
 }: {
   name?: string;
   label?: string;
-  folder?: 'productos' | 'categorias' | 'pagos';
+  folder?: 'productos' | 'categorias' | 'pagos' | 'mantenimiento';
   defaultValue?: string;
 }) {
   const inputId = useId();
