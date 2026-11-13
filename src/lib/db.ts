@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   phone TEXT,
+  address TEXT,
   role TEXT NOT NULL DEFAULT 'customer' CHECK (role IN ('customer', 'admin')),
   balance_cents INTEGER NOT NULL DEFAULT 0 CHECK (balance_cents >= 0),
   is_active INTEGER NOT NULL DEFAULT 1,
@@ -267,6 +268,9 @@ function migrate(db: Db) {
   const columns = db.prepare('PRAGMA table_info(users)').all() as { name: string }[];
   if (!columns.some((column) => column.name === 'updated_at')) {
     db.exec("ALTER TABLE users ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''");
+  }
+  if (!columns.some((column) => column.name === 'address')) {
+    db.exec('ALTER TABLE users ADD COLUMN address TEXT');
   }
   db.exec("UPDATE users SET updated_at = created_at WHERE updated_at = '' OR updated_at IS NULL");
 }
