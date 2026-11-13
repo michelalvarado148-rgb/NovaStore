@@ -15,6 +15,18 @@ type Body = {
 };
 
 /** Alta y baja del dispositivo autorizado. Exclusivo del administrador. */
+/** Sin sesión de administrador no se revela nada; con sesión se indica el método correcto. */
+export async function GET() {
+  const user = await getCurrentUser();
+  if (!user || user.role !== 'admin') {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+  return NextResponse.json(
+    { error: 'Usa POST para autorizar o eliminar el dispositivo' },
+    { status: 405 },
+  );
+}
+
 export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user || user.role !== 'admin') {
