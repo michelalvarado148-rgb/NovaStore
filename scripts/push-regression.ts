@@ -31,14 +31,14 @@ async function main() {
     keys: { p256dh: 'p'.repeat(80), auth: 'a'.repeat(22) },
     device: 'Android · Chrome',
   });
-  assert.equal(first.ok, true);
+  if (!first.ok) throw new Error(first.error);
   assert.equal(first.deviceCount, 1);
   const second = push.saveSubscription({
     endpoint,
     keys: { p256dh: 'q'.repeat(80), auth: 'b'.repeat(22) },
     device: 'Android · Chrome',
   });
-  assert.equal(second.ok, true);
+  if (!second.ok) throw new Error(second.error);
   assert.equal(second.deviceCount, 1, 'no duplica el mismo dispositivo');
   console.log('✔ dispositivo guardado sin duplicados');
 
