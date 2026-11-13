@@ -18,4 +18,22 @@ export async function register(): Promise<void> {
       error instanceof Error ? error.message : String(error),
     );
   }
+
+  // Copias automáticas: se revisa cada hora si ya venció el intervalo
+  // configurado (diario o semanal) y, de ser así, se crea la copia.
+  const tick = async () => {
+    try {
+      const { maybeRunAutomaticBackup, prepareBackups } = await import('./lib/backups');
+      await prepareBackups();
+      await maybeRunAutomaticBackup();
+    } catch (error) {
+      console.warn(
+        '[novastore] no se pudo ejecutar la copia automática:',
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  };
+
+  setTimeout(tick, 60_000);
+  setInterval(tick, 60 * 60 * 1000).unref?.();
 }

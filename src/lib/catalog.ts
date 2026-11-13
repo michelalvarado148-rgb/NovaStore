@@ -74,7 +74,11 @@ export type Pricing = {
 };
 
 export function getSettings(): Record<string, string> {
-  const rows = getDb().prepare('SELECT key, value FROM settings').all() as {
+  // Las copias de seguridad se guardan en esta tabla con el prefijo `backup:`;
+  // se excluyen para que el escaparate no cargue sus payloads.
+  const rows = getDb()
+    .prepare("SELECT key, value FROM settings WHERE key NOT LIKE 'backup:%'")
+    .all() as {
     key: string;
     value: string;
   }[];

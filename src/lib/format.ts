@@ -109,3 +109,18 @@ export function maskName(name: string): string {
   const last = parts.length > 1 ? ` ${parts[parts.length - 1][0]}.` : '';
   return `${first}${last}`;
 }
+
+/** Tamaño legible: 2048 -> "2.0 KB". */
+export function formatBytes(bytes: number | null | undefined): string {
+  const value = Number(bytes ?? 0);
+  if (!Number.isFinite(value) || value <= 0) return '0 B';
+  if (value < 1024) return `${value} B`;
+  const units = ['KB', 'MB', 'GB'];
+  let size = value / 1024;
+  let unit = 0;
+  while (size >= 1024 && unit < units.length - 1) {
+    size /= 1024;
+    unit += 1;
+  }
+  return `${size.toFixed(1)} ${units[unit]}`;
+}

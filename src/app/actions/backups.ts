@@ -6,6 +6,7 @@ import { requireAdmin } from '@/lib/auth';
 import {
   createBackup,
   deleteBackup,
+  flushBackups,
   importBackup,
   maybeRunAutomaticBackup,
   restoreBackup,
@@ -93,6 +94,7 @@ export async function saveAutoBackupAction(formData: FormData): Promise<void> {
   const frequency = formData.get('frequency') === 'semanal' ? 'semanal' : 'diaria';
 
   saveBackupSettings({ enabled, frequency });
+  await flushBackups();
 
   const run = enabled ? await maybeRunAutomaticBackup() : { ran: false, reason: '' };
   if (run.ran) {
