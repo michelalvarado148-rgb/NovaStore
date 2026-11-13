@@ -6,6 +6,7 @@ import { getPaymentMethods, getSettings } from '@/lib/catalog';
 import { formatPEN } from '@/lib/format';
 import CheckoutPayment from '@/components/CheckoutPayment';
 import CheckoutForm from '@/components/CheckoutForm';
+import ConfirmOrderButton from '@/components/ConfirmOrderButton';
 import { getActiveNotices, toPublicNotice } from '@/lib/product-notice';
 
 export const dynamic = 'force-dynamic';
@@ -158,9 +159,7 @@ export default async function CheckoutPage({
             </p>
           ) : null}
 
-          <button type="submit" className="btn btn-primary mt-5 w-full" disabled={methods.length === 0}>
-            Confirmar pedido
-          </button>
+          <ConfirmOrderButton disabled={methods.length === 0} />
           <Link href="/carrito" className="btn btn-ghost mt-2 w-full">Volver al carrito</Link>
           <Link href="/cuenta/saldo" className="btn btn-ghost mt-2 w-full">Añadir saldo</Link>
 
