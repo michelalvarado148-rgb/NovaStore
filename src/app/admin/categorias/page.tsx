@@ -1,5 +1,6 @@
 import { getCategories } from '@/lib/catalog';
 import { deleteCategoryAction, saveCategoryAction } from '@/app/actions/admin';
+import ImagePicker from '@/components/admin/ImagePicker';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Gestión de categorías' };
@@ -27,10 +28,9 @@ export default async function AdminCategoriesPage({
           <span>Nombre</span>
           <input name="name" required minLength={3} maxLength={60} placeholder="Ej. Juegos" />
         </label>
-        <label className="field">
-          <span>Imagen (URL o ruta)</span>
-          <input name="image_url" placeholder="/images/categories/juegos.svg" />
-        </label>
+        <div className="md:col-span-2">
+          <ImagePicker label="Imagen de la categoría" folder="categorias" />
+        </div>
         <label className="field md:col-span-2">
           <span>Descripción</span>
           <input name="description" maxLength={200} placeholder="Describe brevemente la categoría" />
@@ -64,10 +64,10 @@ export default async function AdminCategoriesPage({
                 defaultValue={category.description}
                 placeholder="Descripción"
               />
-              <input
-                name="image_url"
+              <ImagePicker
+                label="Imagen"
+                folder="categorias"
                 defaultValue={category.image_url ?? ''}
-                placeholder="/images/categories/…"
               />
               <div className="flex flex-wrap items-center gap-3">
                 <label className="flex items-center gap-2 text-xs text-slate-300">

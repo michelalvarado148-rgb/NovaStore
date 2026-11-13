@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getCategories } from '@/lib/catalog';
 import { saveProductAction } from '@/app/actions/admin';
+import ImagePicker from '@/components/admin/ImagePicker';
 import type { AdminProduct } from '@/lib/admin';
 import { centsToInput } from '@/lib/format';
 
@@ -38,14 +39,13 @@ export default function ProductForm({
           </select>
         </label>
 
-        <label className="field">
-          <span>Imagen (URL o ruta)</span>
-          <input
-            name="image_url"
+        <div className="md:col-span-2">
+          <ImagePicker
+            label="Imagen del producto"
+            folder="productos"
             defaultValue={product?.image_url ?? ''}
-            placeholder="/images/products/ejemplo.svg"
           />
-        </label>
+        </div>
 
         <label className="field md:col-span-2">
           <span>Descripción</span>
