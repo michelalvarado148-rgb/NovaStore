@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import ProductForm from '@/components/admin/ProductForm';
 import { listAdminProducts } from '@/lib/admin';
+import { getProductNoticeConfig } from '@/lib/product-notice';
 import { getVariants } from '@/lib/catalog';
 import { getDb } from '@/lib/db';
 
@@ -33,7 +34,7 @@ export default async function EditProductPage({
           Volver
         </Link>
       </div>
-      <ProductForm product={product} variants={variants} />
+      <ProductForm product={product} variants={variants} notice={getProductNoticeConfig(product.id)} />
     </div>
   );
 }

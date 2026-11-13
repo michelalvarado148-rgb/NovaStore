@@ -19,6 +19,7 @@ import {
   type VariantInput,
 } from '@/lib/admin';
 import { adjustBalance, restoreStockForOrder, updateOrder } from '@/lib/orders';
+import { deleteProductNotice, saveProductNotice } from '@/lib/product-notice';
 import { clearPaymentQrUrl, savePaymentQrUrl } from '@/lib/payment-qr';
 
 function back(path: string, message: string, type: 'ok' | 'error' = 'error'): never {
@@ -54,6 +55,19 @@ function parseVariants(formData: FormData): VariantInput[] {
 
 /* ------------------------------ Productos ---------------------------- */
 
+/** Lee la sección «Avisos y requisitos del producto» del formulario de producto. */
+function noticeInputFrom(formData: FormData) {
+  const labels = formData.getAll('notice_field_label').map((value) => String(value ?? ''));
+  const required = formData.getAll('notice_field_required').map((value) => String(value ?? ''));
+  return {
+    enabled: formData.get('notice_enabled') === 'on',
+    type: String(formData.get('notice_type') ?? 'personalizado'),
+    message: String(formData.get('notice_message') ?? ''),
+    deliveryTime: String(formData.get('notice_delivery') ?? ''),
+    fields: labels.map((label, index) => ({ label, required: required[index] === '1' })),
+  };
+}
+
 export async function saveProductAction(formData: FormData) {
   await requireAdmin('/admin/productos');
   const id = intOrNull(formData.get('id'));
@@ -76,6 +90,10 @@ export async function saveProductAction(formData: FormData) {
 
   if (!result.ok) back(id ? `/admin/productos/${id}` : '/admin/productos/nuevo', result.error);
 
+  // El aviso se guarda en la misma operación: editar el aviso nunca obliga a borrar el producto.
+  const notice = saveProductNotice(result.id, noticeInputFrom(formData));
+  if (!notice.ok) back(`/admin/productos/${result.id}`, notice.error);
+
   revalidatePath('/admin/productos');
   revalidatePath('/productos');
   revalidatePath('/');
@@ -90,6 +108,7 @@ export async function deleteProductAction(formData: FormData) {
   revalidatePath('/admin/productos');
   revalidatePath('/productos');
   if (!result.ok) back('/admin/productos', result.error);
+  deleteProductNotice(id);
   redirect(`/admin/productos?ok=${encodeURIComponent('Producto eliminado.')}`);
 }
 
