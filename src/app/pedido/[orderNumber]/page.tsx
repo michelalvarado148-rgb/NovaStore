@@ -44,8 +44,18 @@ export default async function OrderPage({
         <div className="mb-5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4">
           <p className="font-bold text-emerald-200">¡Pedido registrado correctamente!</p>
           <p className="mt-1 text-sm text-emerald-100/80">
-            Tu pedido quedó <strong>pendiente de verificación</strong>. Revisaremos tu comprobante y
-            actualizaremos el estado. Guarda tu número de pedido: {order.order_number}.
+            {order.payment_method === 'saldo' ? (
+              <>
+                Tu compra fue pagada con tu <strong>saldo NovaStore</strong> y el importe ya se
+                descontó de tu cuenta. Guarda tu número de pedido: {order.order_number}.
+              </>
+            ) : (
+              <>
+                Tu pedido quedó <strong>pendiente de verificación</strong>. Revisaremos tu
+                comprobante y actualizaremos el estado. Guarda tu número de pedido:{' '}
+                {order.order_number}.
+              </>
+            )}
           </p>
         </div>
       ) : null}
@@ -178,9 +188,13 @@ export default async function OrderPage({
 
             <div className="panel-flat p-4">
               <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-purple-200">
-                Comprobante
+                {order.payment_method === 'saldo' ? 'Pago' : 'Comprobante'}
               </h3>
-              {order.proof ? (
+              {order.payment_method === 'saldo' ? (
+                <p className="mt-2 text-sm text-emerald-200">
+                  Pagado con saldo NovaStore. No se requiere comprobante para este pedido.
+                </p>
+              ) : order.proof ? (
                 <>
                   <a
                     href={`/api/comprobante/${order.proof.id}`}

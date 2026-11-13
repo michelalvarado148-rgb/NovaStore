@@ -8,9 +8,9 @@ export type CheckoutMethod = {
   id: number;
   code: string;
   name: string;
-  description: string;
-  account_info: string;
-  instructions: string;
+  description?: string;
+  account_info?: string;
+  instructions?: string;
 };
 
 const SALDO_CODE = 'saldo';
