@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import {
   DEFAULT_ADMIN_PASSWORD,
@@ -114,6 +114,28 @@ export function adminUsesDefaultPassword(userId: number): boolean {
   return verifyPassword(DEFAULT_ADMIN_PASSWORD, row.password_hash);
 }
 
+/**
+ * En producción la cookie de sesión siempre viaja marcada como `secure`. Los
+ * hosts de bucle (localhost, 127.0.0.1, ::1) se sirven por http en desarrollo y
+ * pruebas locales, donde una cookie `secure` sería descartada por el navegador
+ * y el usuario aparecería deslogueado; ahí se emite sin esa marca.
+ */
+async function sessionCookieSecure(): Promise<boolean> {
+  if (process.env.NODE_ENV !== 'production') return false;
+  try {
+    const host = ((await headers()).get('host') ?? '')
+      .trim()
+      .toLowerCase()
+      .replace(/:\d+$/, '');
+    if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host === '::1') {
+      return false;
+    }
+  } catch {
+    // Sin acceso a las cabeceras se mantiene el comportamiento seguro.
+  }
+  return true;
+}
+
 export async function createSession(userId: number, userAgent?: string | null): Promise<void> {
   const db = getDb();
   const token = newToken();
@@ -127,7 +149,7 @@ export async function createSession(userId: number, userAgent?: string | null): 
   store.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: await sessionCookieSecure(),
     path: '/',
     maxAge: SESSION_DAYS * 24 * 60 * 60,
   });
