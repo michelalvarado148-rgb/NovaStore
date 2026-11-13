@@ -15,7 +15,7 @@
  * constancia en el registro: nunca se rompe una compra por un fallo de red.
  */
 import type { Db } from './db';
-import { sbDeleteIn, sbPing, sbSelect, sbUpsert, supabaseConfigured } from './supabase-rest';
+import { sbDeleteIn, sbPing, sbSelect, sbSyncSequence, sbUpsert, supabaseConfigured } from './supabase-rest';
 
 type Row = Record<string, unknown>;
 
@@ -151,6 +151,10 @@ export async function pushTable(db: Db, spec: TableSpec): Promise<void> {
   if (stale.length > 0) {
     await sbDeleteIn(spec.name, spec.pk, stale);
   }
+
+  if (spec.pk === 'id') {
+    await sbSyncSequence(spec.name, spec.pk);
+  }
 }
 
 async function restoreAll(db: Db): Promise<void> {
@@ -249,7 +253,9 @@ async function runFlush(): Promise<void> {
   if (flushing) return;
   const db = currentDb;
   if (!db) return;
-  const tables = [...dirty];
+  const tables = [...dirty].sort(
+    (a, b) => TABLES.findIndex((spec) => spec.name === a) - TABLES.findIndex((spec) => spec.name === b),
+  );
   dirty.clear();
   if (tables.length === 0) return;
 
