@@ -243,6 +243,32 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+
+-- Copias de seguridad de la tienda (se replican en Supabase como el resto).
+CREATE TABLE IF NOT EXISTS backups (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'manual'
+    CHECK (kind IN ('manual', 'automatica', 'importada')),
+  status TEXT NOT NULL DEFAULT 'completa'
+    CHECK (status IN ('completa', 'incompleta', 'error')),
+  size_bytes INTEGER NOT NULL DEFAULT 0,
+  rows_count INTEGER NOT NULL DEFAULT 0,
+  tables_count INTEGER NOT NULL DEFAULT 0,
+  checksum TEXT NOT NULL DEFAULT '',
+  origin TEXT,
+  note TEXT,
+  payload TEXT NOT NULL,
+  created_by INTEGER,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_backups_created ON backups(created_at DESC);
+
+CREATE TABLE IF NOT EXISTS backup_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
 `;
 
 export function nowIso(): string {

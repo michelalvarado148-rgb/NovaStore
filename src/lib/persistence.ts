@@ -46,6 +46,9 @@ const TABLES: TableSpec[] = [
   { name: 'recharge_requests', pk: 'id', blobs: ['data'] },
   { name: 'support_threads', pk: 'id' },
   { name: 'support_messages', pk: 'id' },
+  // Copias de seguridad: sus ajustes y su historial también viven en Supabase.
+  { name: 'backup_settings', pk: 'key' },
+  { name: 'backups', pk: 'id' },
 ];
 
 const CHUNK = 200;
