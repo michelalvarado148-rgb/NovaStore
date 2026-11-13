@@ -39,7 +39,9 @@ export async function POST(request: Request) {
     return fail(validation.error);
   }
 
-  const folder: MediaFolder = form.get('folder') === 'categorias' ? 'categorias' : 'productos';
+  const folderRaw = form.get('folder');
+  const folder: MediaFolder =
+    folderRaw === 'categorias' ? 'categorias' : folderRaw === 'pagos' ? 'pagos' : 'productos';
 
   try {
     const saved = await saveImage(buffer, validation.kind, folder);

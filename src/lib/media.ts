@@ -1,5 +1,5 @@
 /**
- * Almacenamiento de imágenes de productos y categorías.
+ * Almacenamiento de imágenes de productos, categorías y del QR de pago.
  *
  * Dos modos, elegidos automáticamente:
  *
@@ -23,7 +23,7 @@ export const MEDIA_BUCKET = (process.env.SUPABASE_MEDIA_BUCKET || 'novastore-med
 
 export type ImageKind = 'jpeg' | 'png' | 'webp';
 export type MediaStorage = 'bucket' | 'database';
-export type MediaFolder = 'productos' | 'categorias';
+export type MediaFolder = 'productos' | 'categorias' | 'pagos';
 
 const MIME_BY_KIND: Record<ImageKind, string> = {
   jpeg: 'image/jpeg',
