@@ -102,16 +102,9 @@ export function readQtyConfigs(productIds: number[]): Map<number, QtyConfig> {
 
   const placeholders = ids.map(() => '?').join(', ');
   const rows = getDb()
-    .prepare(
-      `SELECT key, value FROM settings
-        WHERE key IN (${ids.map(() => '?').join(', ')})`.replace(
-        /\(\?\)/g,
-        `(?`,
-      ),
-    )
+    .prepare(`SELECT key, value FROM settings WHERE key IN (${placeholders})`)
     .all(...ids.map((id) => `${QTY_PREFIX}${id}`)) as { key: string; value: string }[];
 
-  void placeholders;
   for (const row of rows) {
     const id = Number(row.key.slice(QTY_PREFIX.length));
     if (!Number.isInteger(id)) continue;
