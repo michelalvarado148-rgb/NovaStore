@@ -84,7 +84,7 @@ export function getSettings(): Record<string, string> {
   // sus payloads ni las claves privadas.
   const rows = getDb()
     .prepare(
-      "SELECT key, value FROM settings WHERE key NOT LIKE 'backup:%' AND key NOT LIKE 'media:%' AND key NOT LIKE 'push:%' AND key NOT LIKE 'cat_parent:%' AND key NOT LIKE 'product_notice:%' AND key NOT LIKE 'order_inputs:%'",
+      "SELECT key, value FROM settings WHERE key NOT LIKE 'backup:%' AND key NOT LIKE 'media:%' AND key NOT LIKE 'push:%' AND key NOT LIKE 'cat_parent:%' AND key NOT LIKE 'product_notice:%' AND key NOT LIKE 'order_inputs:%' AND key NOT LIKE 'qty:%'",
     )
     .all() as {
     key: string;
