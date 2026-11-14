@@ -102,7 +102,7 @@ async function main() {
   });
   check('describe el rango configurado', () => {
     const text = normalize(rules.describeQtyRange(cfg));
-    assert.match(text, /Desde 100 hasta 10 000/);
+    assert.match(text, /Desde 100 hasta 10,?\s?000/);
     assert.match(text, /de 100 en 100/);
   });
   check('un producto sin la opción activada mantiene el comportamiento anterior', () => {
@@ -135,10 +135,10 @@ async function main() {
   const productId = Number(
     db
       .prepare(
-        `INSERT INTO products (category_id, name, slug, description, price_cents, stock, is_active, is_featured, created_at)
-         VALUES (?,?,?,?,?,?,?,?,?)`,
+        `INSERT INTO products (category_id, name, slug, description, price_cents, stock, is_active, is_featured, created_at, updated_at)
+         VALUES (?,?,?,?,?,?,?,?,?,?)`,
       )
-      .run(categoryId, 'Diamantes de prueba', 'diamantes-prueba', 'Producto de prueba', 200, null, 1, 0, nowIso())
+      .run(categoryId, 'Diamantes de prueba', 'diamantes-prueba', 'Producto de prueba', 200, null, 1, 0, nowIso(), nowIso())
       .lastInsertRowid,
   );
 
@@ -290,7 +290,7 @@ async function main() {
       assert.equal(response.status, 200);
       assert.match(html, /Elige la cantidad/);
       assert.match(html, /por cada 100 unidades/);
-      assert.match(html, /Desde 100 hasta 10 000/);
+      assert.match(html, /Desde 100 hasta 10,?\s?000/);
       assert.match(html, /Precio por unidad/);
       assert.match(html, /Total a pagar/);
     });
@@ -303,17 +303,17 @@ async function main() {
       assert.equal(response.status, 200);
       assert.match(html, /S\/ 6\.00/);
       assert.match(html, /por 100/);
-      assert.match(html, /Desde 100 hasta 10 000/);
+      assert.match(html, /Desde 100 hasta 10,?\s?000/);
     });
 
     await checkAsync('un producto sin la opción activada no muestra el selector', async () => {
       const plainId = Number(
         db
           .prepare(
-            `INSERT INTO products (category_id, name, slug, description, price_cents, stock, is_active, is_featured, created_at)
-             VALUES (?,?,?,?,?,?,?,?,?)`,
+            `INSERT INTO products (category_id, name, slug, description, price_cents, stock, is_active, is_featured, created_at, updated_at)
+             VALUES (?,?,?,?,?,?,?,?,?,?)`,
           )
-          .run(categoryId, 'Producto normal', 'producto-normal-prueba', '', 1500, null, 1, 0, nowIso()).lastInsertRowid,
+          .run(categoryId, 'Producto normal', 'producto-normal-prueba', '', 1500, null, 1, 0, nowIso(), nowIso()).lastInsertRowid,
       );
       assert.ok(plainId > 0);
       const response = await fetch(`${BASE}/producto/producto-normal-prueba`);
