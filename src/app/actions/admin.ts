@@ -98,6 +98,8 @@ function noticeInputFrom(formData: FormData) {
   };
 }
 
+import { clearQtyConfig, saveQtyConfig } from '@/lib/custom-quantity';
+
 export async function saveProductAction(formData: FormData) {
   await requireAdmin('/admin/productos');
   const id = intOrNull(formData.get('id'));
@@ -124,6 +126,18 @@ export async function saveProductAction(formData: FormData) {
   const notice = saveProductNotice(result.id, noticeInputFrom(formData));
   if (!notice.ok) back(`/admin/productos/${result.id}`, notice.error);
 
+  // Cantidad personalizada: se guarda junto con el producto, sin tocar el resto de datos.
+  saveQtyConfig(result.id, {
+    enabled: formData.get('qty_enabled') === 'on',
+    basis: Number(formData.get('qty_basis') ?? 1),
+    min: Number(formData.get('qty_min') ?? 1),
+    max:
+      formData.get('qty_max') === null || String(formData.get('qty_max')).trim() === ''
+        ? null
+        : Number(formData.get('qty_max')),
+    step: Number(formData.get('qty_step') ?? 1),
+  });
+
   revalidatePath('/admin/productos');
   revalidatePath('/productos');
   revalidatePath('/');
@@ -139,6 +153,7 @@ export async function deleteProductAction(formData: FormData) {
   revalidatePath('/productos');
   if (!result.ok) back('/admin/productos', result.error);
   deleteProductNotice(id);
+  clearQtyConfig(id);
   redirect(`/admin/productos?ok=${encodeURIComponent('Producto eliminado.')}`);
 }
 
