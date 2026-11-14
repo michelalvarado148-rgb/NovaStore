@@ -54,9 +54,12 @@ export function normalizeQtyConfig(input: Partial<QtyConfig> | null | undefined)
   let max: number | null =
     rawMax === null || rawMax === undefined || String(rawMax).trim() === '' ? null : intOr(rawMax, 0);
   if (max !== null) {
-    if (max < 1) max = null;
-    if (max > MAX_CUSTOM_QTY) max = MAX_CUSTOM_QTY;
-    if (max < min) max = min;
+    if (max < 1) {
+      max = null;
+    } else {
+      if (max > MAX_CUSTOM_QTY) max = MAX_CUSTOM_QTY;
+      if (max < min) max = min;
+    }
   }
 
   let step = intOr(input?.step, 1);
