@@ -234,7 +234,10 @@ export async function addToCart(
   quantity: number,
 ): Promise<CartActionResult> {
   const db = getDb();
-  const qty = Math.max(1, Math.min(99, Math.floor(quantity || 1)));
+  const qtyConfig = readQtyConfig(productId);
+  const checked = validateQuantity(qtyConfig, quantity);
+  if (!checked.ok) return { ok: false, error: checked.error };
+  const qty = checked.quantity;
 
   const product = db
     .prepare('SELECT id, stock, is_active FROM products WHERE id = ?')
@@ -263,7 +266,15 @@ export async function addToCart(
     )
     .get(cartId, productId, variantId ?? 0) as { id: number; quantity: number } | undefined;
 
-  const targetQty = Math.min(qty + (existing?.quantity ?? 0), 99);
+  let targetQty = qty + (existing?.quantity ?? 0);
+  if (qtyConfig.enabled) {
+    // La cantidad acumulada también debe respetar mínimo, máximo e intervalo.
+    const combined = validateQuantity(qtyConfig, targetQty);
+    if (!combined.ok) return { ok: false, error: combined.error };
+    targetQty = combined.quantity;
+  } else {
+    targetQty = Math.min(targetQty, 99);
+  }
   if (available !== null && targetQty > available) {
     return {
       ok: false,
@@ -316,13 +327,17 @@ export async function updateCartItem(itemId: number, quantity: number): Promise<
     return { ok: true };
   }
 
+  const qtyConfig = readQtyConfig(item.product_id);
+  const checked = validateQuantity(qtyConfig, qty);
+  if (!checked.ok) return { ok: false, error: checked.error };
+
   const available = item.variant_stock !== null ? item.variant_stock : item.product_stock;
-  if (available !== null && qty > available) {
+  if (available !== null && checked.quantity > available) {
     return { ok: false, error: `Solo quedan ${available} unidades disponibles.` };
   }
 
   db.prepare('UPDATE cart_items SET quantity = ? WHERE id = ? AND cart_id = ?').run(
-    Math.min(qty, 99),
+    qtyConfig.enabled ? checked.quantity : Math.min(checked.quantity, 99),
     itemId,
     cartId,
   );

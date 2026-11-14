@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { getDb, nowIso } from './db';
 import { buildCartDetail } from './cart';
 import { getActiveOffers, getPaymentMethods, getSetting } from './catalog';
+import { readQtyConfig, validateQuantity } from './custom-quantity';
 import { maskName } from './format';
 
 export type OrderStatus = 'pendiente' | 'en_proceso' | 'entregado' | 'rechazado' | 'cancelado';
@@ -143,6 +144,11 @@ export function placeOrder(input: PlaceOrderInput): PlaceOrderResult {
   }
 
   for (const line of cart.lines) {
+    // La cantidad se valida otra vez contra la configuración vigente del producto.
+    const qtyCheck = validateQuantity(readQtyConfig(line.product_id), line.quantity);
+    if (!qtyCheck.ok) {
+      return { ok: false, error: `"${line.name}": ${qtyCheck.error}` };
+    }
     if (!line.is_active) {
       return { ok: false, error: `El producto "${line.name}" ya no está disponible.` };
     }
