@@ -111,7 +111,13 @@ async function main() {
     assert.equal(rules.validateQuantity(off, 3).ok, true);
   });
   check('normaliza valores inválidos del panel', () => {
-    const weird = rules.normalizeQtyConfig({ enabled: 'on', basis: 7, min: -5, max: 10, step: 0 });
+    const weird = rules.normalizeQtyConfig({
+      enabled: 'on' as unknown as boolean,
+      basis: 7,
+      min: -5,
+      max: 10,
+      step: 0,
+    });
     assert.equal(weird.enabled, true);
     assert.equal(weird.basis, 1);
     assert.equal(weird.min, 1);
