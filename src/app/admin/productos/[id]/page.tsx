@@ -4,6 +4,7 @@ import ProductForm from '@/components/admin/ProductForm';
 import { listAdminProducts } from '@/lib/admin';
 import { getProductNoticeConfig } from '@/lib/product-notice';
 import { getVariants } from '@/lib/catalog';
+import { readQtyConfig } from '@/lib/custom-quantity';
 import { getDb } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
@@ -34,7 +35,12 @@ export default async function EditProductPage({
           Volver
         </Link>
       </div>
-      <ProductForm product={product} variants={variants} notice={getProductNoticeConfig(product.id)} />
+      <ProductForm
+        product={product}
+        variants={variants}
+        notice={getProductNoticeConfig(product.id)}
+        qtyConfig={readQtyConfig(product.id)}
+      />
     </div>
   );
 }

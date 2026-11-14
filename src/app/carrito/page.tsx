@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getCart } from '@/lib/cart';
 import { getCurrentUser } from '@/lib/auth';
 import { formatPEN } from '@/lib/format';
+import { basisShortLabel, describeQtyRange, formatUnitPrice } from '@/lib/qty-rules';
 import { removeCartAction, updateCartAction } from '@/app/actions/cart';
 import MaintenanceScreen from '@/components/MaintenanceScreen';
 import { isStoreClosed } from '@/lib/maintenance';
@@ -51,7 +52,12 @@ export default async function CartPage({
         <div className="mt-6 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
           <div className="space-y-3">
             {cart.lines.map((line) => {
-              const maxQty = line.stock === null ? 20 : Math.min(20, line.stock);
+              const stockCap = line.stock ?? Number.MAX_SAFE_INTEGER;
+              const maxQty = line.custom_qty
+                ? Math.min(line.qty_max ?? stockCap, stockCap)
+                : line.stock === null
+                  ? 20
+                  : Math.min(20, line.stock);
               const unavailable = line.is_active === 0 || (line.stock !== null && line.stock <= 0);
               return (
                 <div
@@ -80,11 +86,28 @@ export default async function CartPage({
                       <p className="mt-0.5 text-xs text-purple-300">{line.variant_name}</p>
                     ) : null}
                     <p className="mt-1 text-xs text-slate-400">
-                      {formatPEN(line.unit_price_cents)} c/u
+                      {line.custom_qty
+                        ? formatUnitPrice(line.unit_price_cents)
+                        : formatPEN(line.unit_price_cents)}{' '}
+                      c/u
+                      {line.custom_qty ? (
+                        <span className="ml-1 text-slate-500">({basisShortLabel(line.qty_basis)})</span>
+                      ) : null}
                       {line.discount_percent > 0 ? (
                         <span className="ml-2 text-fuchsia-300">-{line.discount_percent}%</span>
                       ) : null}
                     </p>
+                    {line.custom_qty ? (
+                      <p className="mt-0.5 text-[0.7rem] text-slate-500">
+                        {describeQtyRange({
+                          enabled: true,
+                          basis: line.qty_basis,
+                          min: line.qty_min,
+                          max: line.qty_max,
+                          step: line.qty_step,
+                        })}
+                      </p>
+                    ) : null}
                     {unavailable ? (
                       <p className="mt-1 text-xs font-semibold text-red-300">
                         Sin stock suficiente. Actualiza la cantidad.
@@ -97,8 +120,9 @@ export default async function CartPage({
                     <input
                       type="number"
                       name="quantity"
-                      min={1}
+                      min={line.custom_qty ? line.qty_min : 1}
                       max={Math.max(1, maxQty)}
+                      step={line.custom_qty ? line.qty_step : 1}
                       defaultValue={line.quantity}
                       className="input w-20 py-1.5 text-center"
                       aria-label={`Cantidad de ${line.name}`}

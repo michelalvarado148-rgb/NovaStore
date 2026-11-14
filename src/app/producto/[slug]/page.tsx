@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
+import QuantitySelector from '@/components/QuantitySelector';
+import { readQtyConfig } from '@/lib/custom-quantity';
 import { addToCartAction } from '@/app/actions/cart';
 import {
   computePricing,
@@ -143,7 +145,13 @@ export default async function ProductPage({
               </div>
             ) : null}
 
-            <div className="flex items-end gap-3">
+            {readQtyConfig(product.id).enabled ? (
+              <QuantitySelector
+                priceCents={pricing.priceCents}
+                config={readQtyConfig(product.id)}
+                available={available}
+              />
+            ) : (
               <div className="w-28">
                 <label htmlFor="quantity" className="label">Cantidad</label>
                 <input
@@ -156,6 +164,8 @@ export default async function ProductPage({
                   className="input"
                 />
               </div>
+            )}
+            <div className="flex items-end gap-3">
               <button type="submit" className="btn btn-primary flex-1" disabled={soldOut}>
                 <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.6L21 8H6" />

@@ -2,6 +2,13 @@ import { cookies } from 'next/headers';
 import { CART_COOKIE, getCurrentUser } from './auth';
 import { getDb, newToken, nowIso } from './db';
 import { computePricing, getActiveOffers, type Offer } from './catalog';
+import {
+  DEFAULT_QTY_CONFIG,
+  readQtyConfig,
+  readQtyConfigs,
+  totalCentsFor,
+  validateQuantity,
+} from './custom-quantity';
 
 export type CartLine = {
   item_id: number;
@@ -18,6 +25,12 @@ export type CartLine = {
   line_total_cents: number;
   stock: number | null;
   is_active: number;
+  /** Cantidad personalizada configurada para el producto. */
+  custom_qty: boolean;
+  qty_basis: number;
+  qty_min: number;
+  qty_max: number | null;
+  qty_step: number;
 };
 
 export type CartDetail = {
@@ -141,7 +154,11 @@ export function buildCartDetail(cartId: number | null, offers?: Offer[]): CartDe
   let subtotal = 0;
   let savings = 0;
 
-  for (const raw of rawLines(cartId)) {
+  const raws = rawLines(cartId);
+  const qtyConfigs = readQtyConfigs(raws.map((raw) => raw.product_id));
+
+  for (const raw of raws) {
+    const qtyConfig = qtyConfigs.get(raw.product_id) ?? DEFAULT_QTY_CONFIG;
     const pricing = computePricing(
       {
         id: raw.product_id,
@@ -153,9 +170,15 @@ export function buildCartDetail(cartId: number | null, offers?: Offer[]): CartDe
     );
     const unit = pricing.priceCents;
     const compare = pricing.comparePriceCents ?? unit;
-    const lineTotal = unit * raw.quantity;
+    // Con cantidad personalizada el precio corresponde a la base configurada
+    // (por unidad, por 100 o por 1000), así que el total se recalcula aquí.
+    const lineTotal = qtyConfig.enabled
+      ? totalCentsFor(unit, raw.quantity, qtyConfig)
+      : unit * raw.quantity;
     subtotal += lineTotal;
-    savings += Math.max(0, compare - unit) * raw.quantity;
+    savings += qtyConfig.enabled
+      ? Math.max(0, totalCentsFor(compare, raw.quantity, qtyConfig) - lineTotal)
+      : Math.max(0, compare - unit) * raw.quantity;
 
     lines.push({
       item_id: raw.item_id,
@@ -172,6 +195,11 @@ export function buildCartDetail(cartId: number | null, offers?: Offer[]): CartDe
       line_total_cents: lineTotal,
       stock: raw.variant_stock !== null ? raw.variant_stock : raw.product_stock,
       is_active: raw.is_active,
+      custom_qty: qtyConfig.enabled,
+      qty_basis: qtyConfig.basis,
+      qty_min: qtyConfig.min,
+      qty_max: qtyConfig.max,
+      qty_step: qtyConfig.step,
     });
   }
 
