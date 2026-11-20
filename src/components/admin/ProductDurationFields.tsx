@@ -12,11 +12,15 @@ import { DURATION_PRESETS, durationLabelFor, type ProductDuration } from '@/lib/
 export default function ProductDurationFields({
   streamingCategoryIds,
   initial = null,
+  initialCategoryId = null,
 }: {
   streamingCategoryIds: number[];
   initial?: ProductDuration | null;
+  initialCategoryId?: number | null;
 }) {
-  const [isStreaming, setIsStreaming] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(
+    initialCategoryId !== null && streamingCategoryIds.includes(initialCategoryId),
+  );
   const [preset, setPreset] = useState<string>(initial?.preset ?? '');
   const [custom, setCustom] = useState<string>(initial?.custom ?? '');
 
