@@ -23,6 +23,7 @@ import { deleteProductNotice, saveProductNotice } from '@/lib/product-notice';
 import { deleteProductDuration, saveProductDuration } from '@/lib/product-duration';
 import { clearPaymentQrUrl, savePaymentQrUrl } from '@/lib/payment-qr';
 import { saveMaintenanceConfig } from '@/lib/maintenance';
+import { deleteOrderDelivery, markOrderDelivered, saveOrderDelivery } from '@/lib/deliveries';
 
 function back(path: string, message: string, type: 'ok' | 'error' = 'error'): never {
   redirect(`${path}?${type}=${encodeURIComponent(message)}`);
@@ -291,6 +292,57 @@ export async function updateOrderAction(formData: FormData) {
   revalidatePath('/admin');
   revalidatePath('/cuenta');
   redirect(`/admin/pedidos/${orderId}?ok=${encodeURIComponent('Pedido actualizado.')}`);
+}
+
+/* ------------------------ Datos de entrega --------------------------- */
+
+/**
+ * Guarda los datos que recibe el cliente (correo, contraseña, PIN, vencimiento…)
+ * y, si se pide, marca el pedido como entregado para que pueda verlos.
+ */
+export async function saveOrderDeliveryAction(formData: FormData) {
+  const admin = await requireAdmin('/admin/pedidos');
+  const orderId = Number(formData.get('order_id') ?? 0);
+  if (!orderId) back('/admin/pedidos', 'Pedido inválido.');
+
+  const labels = formData.getAll('delivery_label').map((value) => String(value ?? ''));
+  const values = formData.getAll('delivery_value').map((value) => String(value ?? ''));
+  const kinds = formData.getAll('delivery_kind').map((value) => String(value ?? ''));
+
+  const result = saveOrderDelivery(orderId, {
+    fields: labels.map((label, index) => ({
+      label,
+      value: values[index] ?? '',
+      kind: kinds[index] ?? 'texto',
+    })),
+    instructions: String(formData.get('instructions') ?? ''),
+  });
+
+  if (!result.ok) back(`/admin/pedidos/${orderId}`, result.error);
+
+  if (formData.get('mark_delivered') === 'on') {
+    markOrderDelivered(orderId, admin.id);
+  }
+
+  revalidatePath(`/admin/pedidos/${orderId}`);
+  revalidatePath('/admin/pedidos');
+  revalidatePath('/cuenta/pedidos');
+  redirect(
+    `/admin/pedidos/${orderId}?ok=${encodeURIComponent(
+      'Datos de entrega guardados. El cliente ya puede verlos con el icono de ojo.',
+    )}`,
+  );
+}
+
+export async function deleteOrderDeliveryAction(formData: FormData) {
+  await requireAdmin('/admin/pedidos');
+  const orderId = Number(formData.get('order_id') ?? 0);
+  if (!orderId) back('/admin/pedidos', 'Pedido inválido.');
+
+  deleteOrderDelivery(orderId);
+  revalidatePath(`/admin/pedidos/${orderId}`);
+  revalidatePath('/cuenta/pedidos');
+  redirect(`/admin/pedidos/${orderId}?ok=${encodeURIComponent('Datos de entrega eliminados.')}`);
 }
 
 export async function restoreStockAction(formData: FormData) {
