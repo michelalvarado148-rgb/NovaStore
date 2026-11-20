@@ -3,6 +3,7 @@ import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BottomNav from '@/components/BottomNav';
+import FloatingContact from '@/components/FloatingContact';
 import { getSettings } from '@/lib/catalog';
 import { getCartCount } from '@/lib/cart';
 
@@ -28,6 +29,8 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const settings = getSettings();
   const cartCount = await getCartCount();
+  const whatsappNumber = (settings.whatsapp_number || settings.contact_phone || '').replace(/[^\d]/g, '');
+  const whatsappUrl = settings.whatsapp_url || (whatsappNumber ? `https://wa.me/${whatsappNumber}` : '');
   return (
     <html lang="es">
       <body>
@@ -37,6 +40,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Footer settings={settings} />
         </div>
         <BottomNav cartCount={cartCount} />
+        <FloatingContact telegramUrl={settings.telegram_url} whatsappUrl={whatsappUrl} />
       </body>
     </html>
   );
