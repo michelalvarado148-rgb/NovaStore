@@ -191,7 +191,11 @@ export default function ProductForm({
         </p>
       </div>
 
-      <ProductDurationFields initial={duration} streamingCategoryIds={streamingCategoryIds} />
+      <ProductDurationFields
+        initial={duration}
+        initialCategoryId={product?.category_id ?? null}
+        streamingCategoryIds={streamingCategoryIds}
+      />
 
       <ProductNoticeFields initial={notice} />
 
