@@ -2,7 +2,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getOrderById } from '@/lib/orders';
 import { readDuration } from '@/lib/product-duration';
-import { restoreStockAction, updateOrderAction } from '@/app/actions/admin';
+import { restoreStockAction, updateOrderAction, deleteOrderDeliveryAction } from '@/app/actions/admin';
+import { getOrderDelivery } from '@/lib/deliveries';
+import OrderDeliveryForm from '@/components/admin/OrderDeliveryForm';
 import OrderNoticeAnswers from '@/components/OrderNoticeAnswers';
 import ProductDurationBadge from '@/components/ProductDurationBadge';
 import FreeFirePlayerId from '@/components/FreeFirePlayerId';
@@ -28,6 +30,7 @@ export default async function AdminOrderDetailPage({
   const query = await searchParams;
   const order = getOrderById(Number(id));
   if (!order) notFound();
+  const delivery = getOrderDelivery(order.id);
 
   return (
     <div className="space-y-4">
@@ -195,6 +198,33 @@ export default async function AdminOrderDetailPage({
           </form>
         </section>
       </div>
+
+      <section className="panel mt-5 p-5">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-purple-300">
+            Datos de entrega para el cliente
+          </h2>
+          {delivery ? (
+            <form action={deleteOrderDeliveryAction}>
+              <input type="hidden" name="order_id" value={order.id} />
+              <button type="submit" className="btn btn-ghost btn-xs">
+                Eliminar datos de entrega
+              </button>
+            </form>
+          ) : null}
+        </div>
+        <p className="mb-3 text-xs text-slate-400">
+          Escribe lo que recibe el cliente (correo, contraseña, perfil, PIN, fecha de vencimiento) y
+          las instrucciones de uso. Cuando el pedido esté entregado, el cliente verá estos datos con
+          el icono de ojo en «Mis compras» y podrá copiar cada uno.
+        </p>
+        <OrderDeliveryForm
+          orderId={order.id}
+          initialFields={delivery?.fields ?? []}
+          initialInstructions={delivery?.instructions ?? ''}
+          delivered={order.status === 'entregado'}
+        />
+      </section>
     </div>
   );
 }
