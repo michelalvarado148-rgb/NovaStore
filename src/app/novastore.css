@@ -899,6 +899,21 @@
   background: #00a3ff;
   box-shadow: 0 0 10px rgba(0, 163, 255, 0.95);
 }
+.ns-nav-label {
+  display: block;
+  max-width: 100%;
+  font-size: 0.55rem;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+@media (max-width: 360px) {
+  .ns-nav-label {
+    font-size: 0.5rem;
+    letter-spacing: -0.03em;
+  }
+}
 .ns-nav-ico {
   position: relative;
   display: grid;

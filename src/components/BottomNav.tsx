@@ -64,6 +64,18 @@ export default function BottomNav({ cartCount = 0 }: { cartCount?: number }) {
       ),
     },
     {
+      href: '/cuenta/saldo',
+      label: 'Añadir saldo',
+      matches: (path) => path.startsWith('/cuenta/saldo'),
+      icon: (
+        <svg viewBox="0 0 24 24" {...iconProps}>
+          <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+          <path d="M2.5 10h19" />
+          <path d="M6 15h4" />
+        </svg>
+      ),
+    },
+    {
       href: '/cuenta',
       label: 'Cuenta',
       matches: (path) =>
@@ -95,7 +107,7 @@ export default function BottomNav({ cartCount = 0 }: { cartCount?: number }) {
                     <span className="ns-nav-badge">{cartCount > 99 ? '99+' : cartCount}</span>
                   ) : null}
                 </span>
-                {item.label}
+                <span className="ns-nav-label">{item.label}</span>
               </Link>
             </li>
           );
