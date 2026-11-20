@@ -51,6 +51,14 @@ function sql(query) {
   sql(`DELETE FROM users WHERE email='ff-cliente@novastore.test';`);
   sql(`INSERT INTO users (name,email,password_hash,phone,role,balance_cents,is_active,created_at,updated_at)
        VALUES ('Cliente FF','ff-cliente@novastore.test','x','987654321','customer',50000,1,datetime('now'),datetime('now'));`);
+  // El conteo se limita al carrito de este cliente de prueba.
+  const cartItems = () =>
+    Number(
+      sql(`SELECT count(*) FROM cart_items ci
+           JOIN carts c ON c.id = ci.cart_id
+           JOIN users u ON u.id = c.user_id
+           WHERE u.email='ff-cliente@novastore.test';`),
+    );
   const customerToken = crypto.randomBytes(16).toString('hex');
   sql(`INSERT INTO sessions (token_hash,user_id,user_agent,created_at,expires_at)
        VALUES ('${sha256(customerToken)}',(SELECT id FROM users WHERE email='ff-cliente@novastore.test'),'e2e',datetime('now'),datetime('now','+1 day'));`);
@@ -101,19 +109,13 @@ function sql(query) {
     // 2) Sin ID no se puede continuar: el navegador bloquea el envío.
     await page.getByRole('button', { name: 'Agregar al carrito' }).click();
     await sleep(1200);
-    check(
-      Number(sql('SELECT count(*) FROM cart_items;')) === 0,
-      'sin el ID no se agrega nada al carrito',
-    );
+    check(cartItems() === 0, 'sin el ID no se agrega nada al carrito');
 
     // 3) Con ID válido sí continúa y queda recordado.
     await ffInput.fill('123456789');
     await page.getByRole('button', { name: 'Agregar al carrito' }).click();
     await sleep(2500);
-    check(
-      Number(sql('SELECT count(*) FROM cart_items;')) === 1,
-      'con el ID se agrega el producto al carrito',
-    );
+    check(cartItems() === 1, 'con el ID se agrega el producto al carrito');
     check(
       sql("SELECT value FROM settings WHERE key LIKE 'ff_player:%';").includes('123456789'),
       'el ID queda recordado en la cuenta del cliente',
@@ -144,8 +146,11 @@ function sql(query) {
     await page.waitForURL(/\/pedido\//, { timeout: 20000 });
     check(true, 'el pedido se registra y abre su página');
 
-    const orderId = Number(sql('SELECT id FROM orders ORDER BY id DESC LIMIT 1;'));
-    const stored = sql("SELECT value FROM settings WHERE key LIKE 'order_inputs:%' ORDER BY rowid DESC LIMIT 1;");
+    const orderNumber = decodeURIComponent(page.url().split('/pedido/')[1].split('?')[0]);
+    const orderId = Number(
+      sql(`SELECT id FROM orders WHERE order_number='${orderNumber}';`),
+    );
+    const stored = sql(`SELECT value FROM settings WHERE key='order_inputs:${orderNumber}';`);
     check(
       stored.includes('123456789') && stored.includes('ID de Free Fire'),
       'el ID quedó guardado junto con el pedido',
