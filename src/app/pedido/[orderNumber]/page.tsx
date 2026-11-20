@@ -145,9 +145,9 @@ export default async function OrderPage({
                         {item.variant_name ? (
                           <span className="block text-xs text-purple-300">{item.variant_name}</span>
                         ) : null}
-                        {readDuration(item.product_id)?.label ? (
+                        {readDuration(item.product_id ?? 0)?.label ? (
                           <span className="block pt-1">
-                            <ProductDurationBadge label={readDuration(item.product_id)!.label} />
+                            <ProductDurationBadge label={readDuration(item.product_id ?? 0)!.label} />
                           </span>
                         ) : null}
                       </td>

@@ -68,9 +68,9 @@ export default async function AdminOrderDetailPage({
                     {item.variant_name ? (
                       <p className="text-[0.7rem] text-slate-500">{item.variant_name}</p>
                     ) : null}
-                    {readDuration(item.product_id)?.label ? (
+                    {readDuration(item.product_id ?? 0)?.label ? (
                       <p className="pt-1">
-                        <ProductDurationBadge label={readDuration(item.product_id)!.label} />
+                        <ProductDurationBadge label={readDuration(item.product_id ?? 0)!.label} />
                       </p>
                     ) : null}
                   </td>
