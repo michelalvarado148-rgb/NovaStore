@@ -3,6 +3,8 @@ import { getCategoryTree } from '@/lib/catalog';
 import { saveProductAction } from '@/app/actions/admin';
 import ImagePicker from '@/components/admin/ImagePicker';
 import ProductNoticeFields from '@/components/admin/ProductNoticeFields';
+import ProductDurationFields from '@/components/admin/ProductDurationFields';
+import { getStreamingCategoryIds, type ProductDuration } from '@/lib/product-duration';
 import type { AdminProduct } from '@/lib/admin';
 import type { ProductNotice } from '@/lib/product-notice';
 import type { QtyConfig } from '@/lib/custom-quantity';
@@ -15,13 +17,16 @@ export default function ProductForm({
   variants = [],
   notice = null,
   qtyConfig = null,
+  duration = null,
 }: {
   product?: AdminProduct;
   variants?: { id: number; name: string; price_cents: number | null; stock: number | null }[];
   notice?: ProductNotice | null;
   qtyConfig?: QtyConfig | null;
+  duration?: ProductDuration | null;
 }) {
   const categories = getCategoryTree({ includeInactive: true });
+  const streamingCategoryIds = getStreamingCategoryIds();
   const rows = Array.from({ length: Math.max(VARIANT_ROWS, variants.length) });
 
   return (
@@ -185,6 +190,8 @@ export default function ProductForm({
           vuelve a validar en el servidor al agregar al carrito y al confirmar el pedido.
         </p>
       </div>
+
+      <ProductDurationFields initial={duration} streamingCategoryIds={streamingCategoryIds} />
 
       <ProductNoticeFields initial={notice} />
 
