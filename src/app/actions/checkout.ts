@@ -11,6 +11,13 @@ import { getPaymentMethods } from '@/lib/catalog';
 import { SALDO_METHOD, placeOrder, type ProofInput } from '@/lib/orders';
 import { getActiveNotices, saveOrderNoticeAnswers } from '@/lib/product-notice';
 import {
+  FREE_FIRE_FIELD_LABEL,
+  isFreeFireProduct,
+  saveFreeFireId,
+  validateFreeFireId,
+  withFreeFireNotices,
+} from '@/lib/freefire';
+import {
   MAX_FIELD_VALUE,
   type NoticeAnswerPayload,
   type OrderNoticeAnswer,
@@ -76,8 +83,12 @@ export async function placeOrderAction(formData: FormData) {
 
   // Avisos y requisitos por producto: se validan aquí, en el servidor, antes de
   // cobrar el saldo o registrar el pedido con un método externo.
-  const noticeMap = getActiveNotices(cart.lines.map((line) => line.product_id));
+  const noticeMap = withFreeFireNotices(
+    getActiveNotices(cart.lines.map((line) => line.product_id)),
+    cart.lines,
+  );
   const noticeAnswers: OrderNoticeAnswer[] = [];
+  let freeFireIdToRemember = '';
   if (noticeMap.size > 0) {
     let payload: NoticeAnswerPayload[] = [];
     try {
@@ -120,6 +131,16 @@ export async function placeOrderAction(formData: FormData) {
       if (missing) {
         fail(`Completa el dato "${missing.label}" para "${productName}".`);
       }
+
+      // El ID de Free Fire se valida además en formato (solo dígitos y una
+      // longitud razonable) para que el administrador reciba un dato usable.
+      if (isFreeFireProduct(productId)) {
+        const answer = answers.find((item) => item.label === FREE_FIRE_FIELD_LABEL);
+        const checked = validateFreeFireId(answer?.value ?? '');
+        if (!checked.ok) fail(checked.error);
+        if (answer) answer.value = checked.value;
+        freeFireIdToRemember = checked.value;
+      }
       noticeAnswers.push({
         productId,
         productName,
@@ -150,6 +171,11 @@ export async function placeOrderAction(formData: FormData) {
   // Los avisos aceptados y los datos del cliente quedan guardados con el pedido.
   if (!result.duplicated && noticeAnswers.length > 0) {
     saveOrderNoticeAnswers(result.orderNumber, noticeAnswers);
+  }
+
+  // El ID queda recordado en la cuenta del cliente para su próxima compra.
+  if (!result.duplicated && freeFireIdToRemember) {
+    saveFreeFireId(user.id, freeFireIdToRemember);
   }
 
   // Aviso al teléfono del administrador. Un pedido repetido no vuelve a notificar
