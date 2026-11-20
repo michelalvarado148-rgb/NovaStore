@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { computePricing, type Offer, type Product } from '@/lib/catalog';
 import { formatPEN } from '@/lib/format';
+import ProductDurationBadge from '@/components/ProductDurationBadge';
 
 function StockBadge({ stock }: { stock: number | null }) {
   if (stock === null) {
@@ -45,11 +46,14 @@ export default function ProductCard({
   offers,
   index = 0,
   variant = 'grid',
+  duration = null,
 }: {
   product: Product;
   offers: Offer[];
   index?: number;
   variant?: ProductCardVariant;
+  /** Duración del servicio (solo productos de Streaming que la tengan configurada). */
+  duration?: string | null;
 }) {
   const pricing = computePricing(product, offers);
   const soldOut = product.stock !== null && product.stock <= 0;
@@ -81,6 +85,11 @@ export default function ProductCard({
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-bold text-white">{product.name}</p>
           <p className="line-clamp-1 text-[0.72rem] text-slate-400">{product.description}</p>
+          {duration ? (
+            <div className="mt-1">
+              <ProductDurationBadge label={duration} />
+            </div>
+          ) : null}
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             {pricing.discountPercent > 0 ? (
               <span className="badge badge-danger">-{pricing.discountPercent}%</span>
@@ -136,6 +145,11 @@ export default function ProductCard({
         </div>
         <div className="flex flex-1 flex-col gap-1 p-2.5">
           <h3 className="line-clamp-2 text-xs font-bold leading-snug text-white">{product.name}</h3>
+          {duration ? (
+            <div className="pt-1">
+              <ProductDurationBadge label={duration} />
+            </div>
+          ) : null}
           <div className="mt-auto pt-1.5">
             <Price priceCents={pricing.priceCents} comparePriceCents={pricing.comparePriceCents} size="sm" />
           </div>
@@ -182,6 +196,11 @@ export default function ProductCard({
             <Link href={href}>{product.name}</Link>
           </h3>
           <p className="ns-prod-desc">{product.description}</p>
+          {duration ? (
+            <div className="ns-prod-dur">
+              <ProductDurationBadge label={duration} />
+            </div>
+          ) : null}
           <div className="ns-prod-foot">
             <span className="ns-price">{formatPEN(pricing.priceCents)}</span>
             <Link href={href} className={`ns-buy ${soldOut ? 'is-sold' : ''}`}>
@@ -242,6 +261,11 @@ export default function ProductCard({
           {product.name}
         </h3>
         <p className="line-clamp-2 text-xs leading-relaxed text-slate-400">{product.description}</p>
+        {duration ? (
+          <div className="pt-0.5">
+            <ProductDurationBadge label={duration} />
+          </div>
+        ) : null}
 
         <div className="mt-auto flex items-end justify-between gap-2 pt-2">
           <div>

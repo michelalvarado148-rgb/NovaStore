@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import ProductForm from '@/components/admin/ProductForm';
 import { listAdminProducts } from '@/lib/admin';
 import { getProductNoticeConfig } from '@/lib/product-notice';
+import { readDuration } from '@/lib/product-duration';
 import { getVariants } from '@/lib/catalog';
 import { readQtyConfig } from '@/lib/custom-quantity';
 import { getDb } from '@/lib/db';
@@ -40,6 +41,7 @@ export default async function EditProductPage({
         variants={variants}
         notice={getProductNoticeConfig(product.id)}
         qtyConfig={readQtyConfig(product.id)}
+        duration={readDuration(product.id)}
       />
     </div>
   );

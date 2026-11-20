@@ -20,6 +20,7 @@ import {
 } from '@/lib/admin';
 import { adjustBalance, restoreStockForOrder, updateOrder } from '@/lib/orders';
 import { deleteProductNotice, saveProductNotice } from '@/lib/product-notice';
+import { deleteProductDuration, saveProductDuration } from '@/lib/product-duration';
 import { clearPaymentQrUrl, savePaymentQrUrl } from '@/lib/payment-qr';
 import { saveMaintenanceConfig } from '@/lib/maintenance';
 
@@ -126,6 +127,13 @@ export async function saveProductAction(formData: FormData) {
   const notice = saveProductNotice(result.id, noticeInputFrom(formData));
   if (!notice.ok) back(`/admin/productos/${result.id}`, notice.error);
 
+  // Duración del servicio: solo se guarda en productos de Streaming.
+  const duration = saveProductDuration(result.id, {
+    preset: String(formData.get('duration_preset') ?? ''),
+    custom: String(formData.get('duration_custom') ?? ''),
+  });
+  if (!duration.ok) back(`/admin/productos/${result.id}`, duration.error);
+
   // Cantidad personalizada: se guarda junto con el producto, sin tocar el resto de datos.
   saveQtyConfig(result.id, {
     enabled: formData.get('qty_enabled') === 'on',
@@ -153,6 +161,7 @@ export async function deleteProductAction(formData: FormData) {
   revalidatePath('/productos');
   if (!result.ok) back('/admin/productos', result.error);
   deleteProductNotice(id);
+  deleteProductDuration(id);
   clearQtyConfig(id);
   redirect(`/admin/productos?ok=${encodeURIComponent('Producto eliminado.')}`);
 }
