@@ -239,16 +239,16 @@ export default async function ProductPage({
                 Soporte
               </p>
               <p className="mt-1 text-xs text-slate-400">
-                {settings.contact_phone || 'Escríbenos por el canal de Telegram'}
+                {settings.contact_phone || 'Escríbenos por el canal de WhatsApp'}
               </p>
-              {settings.telegram_url ? (
+              {settings.whatsapp_url ? (
                 <a
-                  href={settings.telegram_url}
+                  href={settings.whatsapp_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="link mt-1 inline-block text-xs font-semibold"
                 >
-                  Ir al canal de Telegram →
+                  Ir al canal de WhatsApp →
                 </a>
               ) : null}
             </div>

@@ -337,9 +337,9 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
                 Ver todo el catálogo
               </Link>
             )}
-            {settings.telegram_url ? (
+            {settings.whatsapp_url ? (
               <a
-                href={settings.telegram_url}
+                href={settings.whatsapp_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-outline btn-sm"
@@ -462,21 +462,21 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
             </Link>
           </div>
 
-          {settings.telegram_url ? (
+          {settings.whatsapp_url ? (
             <div className="side-panel relative overflow-hidden p-5">
-              <div className="blue-glow -right-8 -top-8 h-28 w-28 bg-sky-500/40" />
+              <div className="blue-glow -right-8 -top-8 h-28 w-28 bg-emerald-500/40" />
               <div className="relative">
                 <h3 className="text-sm font-extrabold text-white">¿Dudas antes de comprar?</h3>
                 <p className="muted mt-1 text-[0.74rem]">
-                  Escríbenos por Telegram y te ayudamos a elegir.
+                  Escríbenos por WhatsApp y te ayudamos a elegir.
                 </p>
                 <a
-                  href={settings.telegram_url}
+                  href={settings.whatsapp_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-primary btn-sm mt-3 w-full"
                 >
-                  Abrir Telegram
+                  Abrir WhatsApp
                 </a>
               </div>
             </div>

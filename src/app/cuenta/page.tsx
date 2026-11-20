@@ -138,7 +138,7 @@ export default async function AccountPage({
         {[
           { href: '/cuenta/perfil', title: 'Mis datos', text: 'Actualiza tu nombre, teléfono y dirección.' },
           { href: '/cuenta/pedidos', title: 'Historial', text: 'Revisa el estado de cada pedido y su comprobante.' },
-          { href: '/contacto', title: 'Soporte', text: 'Escríbenos por Telegram o correo.' },
+          { href: '/contacto', title: 'Soporte', text: 'Escríbenos por WhatsApp o correo.' },
         ].map((card) => (
           <Link key={card.href} href={card.href} className="panel hover-lift p-4">
             <p className="font-bold text-white">{card.title}</p>

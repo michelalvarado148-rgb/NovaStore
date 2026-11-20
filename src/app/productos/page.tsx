@@ -287,14 +287,14 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
             </p>
             <div className="mt-5 flex flex-wrap justify-center gap-2">
               <Link href="/productos" className="btn btn-primary btn-sm">Ver catálogo completo</Link>
-              {settings.telegram_url ? (
+              {settings.whatsapp_url ? (
                 <a
-                  href={settings.telegram_url}
+                  href={settings.whatsapp_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-outline btn-sm"
                 >
-                  Pedir por Telegram
+                  Pedir por WhatsApp
                 </a>
               ) : null}
             </div>
