@@ -40,7 +40,7 @@ function sql(query) {
   sql(`INSERT INTO categories (name, slug, description, image_url, position, is_active, created_at)
        VALUES ('Free Fire','free-fire','Recargas y pases de Free Fire',NULL,20,1,datetime('now'));`);
   const ffCat = Number(sql(`SELECT id FROM categories WHERE slug='free-fire';`));
-  sql(`INSERT INTO settings (key, value) VALUES ('cat_parent:${ffCat}','1');`);
+  sql(`INSERT INTO settings (key, value, updated_at) VALUES ('cat_parent:${ffCat}','1',datetime('now'));`);
   sql(`INSERT INTO products (category_id, name, slug, description, image_url, price_cents, stock, is_active, is_featured, sold_count, created_at, updated_at)
        VALUES (${ffCat},'Diamantes Free Fire 100','ff-diamantes-100','Recarga de diamantes',NULL,1200,NULL,1,0,0,datetime('now'),datetime('now'));`);
   // Producto de otra categoría (Streaming) para comprobar que NO pide el ID.
