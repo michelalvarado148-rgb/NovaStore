@@ -136,7 +136,7 @@ function sql(query) {
     await page.getByRole('button', { name: 'Confirmar pedido' }).first().click();
     const dialog = page.locator('div[role="dialog"]');
     await dialog.waitFor({ timeout: 10000 });
-    const dialogInput = dialog.locator('input[type="text"]').first();
+    const dialogInput = dialog.locator('input:not([type="checkbox"])').first();
     check(
       (await dialogInput.inputValue()) === '123456789',
       'el checkout reutiliza el ID guardado en la cuenta',
