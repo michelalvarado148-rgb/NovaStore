@@ -6,6 +6,7 @@ import { getPaymentMethods, getSettings } from '@/lib/catalog';
 import { formatPEN } from '@/lib/format';
 import CheckoutPayment from '@/components/CheckoutPayment';
 import CheckoutForm from '@/components/CheckoutForm';
+import ProductDurationBadge from '@/components/ProductDurationBadge';
 import ConfirmOrderButton from '@/components/ConfirmOrderButton';
 import { getActiveNotices, toPublicNotice } from '@/lib/product-notice';
 import { freeFireDefaults, getSavedFreeFireId, withFreeFireNotices } from '@/lib/freefire';
@@ -134,6 +135,11 @@ export default async function CheckoutPage({
                   <span className="text-xs text-slate-500">
                     {line.variant_name ? `${line.variant_name} · ` : ''}x{line.quantity}
                   </span>
+                  {line.duration ? (
+                    <span className="block pt-1">
+                      <ProductDurationBadge label={line.duration} />
+                    </span>
+                  ) : null}
                 </span>
                 <span className="shrink-0 font-semibold text-white">
                   {formatPEN(line.line_total_cents)}
