@@ -84,7 +84,7 @@ export default async function OrdersPage({
 
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-white">{item?.name ?? 'Producto'}</p>
-                    <p className="font-mono text-[0.7rem] text-purple-300">#{order.order_number}</p>
+                    <p className="font-mono text-[0.7rem] text-purple-300">{`#${order.order_number}`}</p>
                     <p className="text-[0.7rem] text-slate-400">
                       {formatDateTime(order.created_at)}
                     </p>
