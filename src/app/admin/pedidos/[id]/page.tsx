@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getOrderById } from '@/lib/orders';
+import { readDuration } from '@/lib/product-duration';
 import { restoreStockAction, updateOrderAction } from '@/app/actions/admin';
 import OrderNoticeAnswers from '@/components/OrderNoticeAnswers';
+import ProductDurationBadge from '@/components/ProductDurationBadge';
 import FreeFirePlayerId from '@/components/FreeFirePlayerId';
 import {
   ORDER_STATUS_LABELS,
@@ -65,6 +67,11 @@ export default async function AdminOrderDetailPage({
                     <p className="text-sm text-white">{item.product_name}</p>
                     {item.variant_name ? (
                       <p className="text-[0.7rem] text-slate-500">{item.variant_name}</p>
+                    ) : null}
+                    {readDuration(item.product_id)?.label ? (
+                      <p className="pt-1">
+                        <ProductDurationBadge label={readDuration(item.product_id)!.label} />
+                      </p>
                     ) : null}
                   </td>
                   <td className="text-slate-300">{item.quantity}</td>

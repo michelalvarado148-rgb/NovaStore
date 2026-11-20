@@ -2,7 +2,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
 import { getOrderForUser } from '@/lib/orders';
+import { readDuration } from '@/lib/product-duration';
 import OrderNoticeAnswers from '@/components/OrderNoticeAnswers';
+import ProductDurationBadge from '@/components/ProductDurationBadge';
 import MaintenanceScreen from '@/components/MaintenanceScreen';
 import { isStoreClosed } from '@/lib/maintenance';
 import {
@@ -142,6 +144,11 @@ export default async function OrderPage({
                         <span className="font-semibold text-white">{item.product_name}</span>
                         {item.variant_name ? (
                           <span className="block text-xs text-purple-300">{item.variant_name}</span>
+                        ) : null}
+                        {readDuration(item.product_id)?.label ? (
+                          <span className="block pt-1">
+                            <ProductDurationBadge label={readDuration(item.product_id)!.label} />
+                          </span>
                         ) : null}
                       </td>
                       <td>{formatPEN(item.unit_price_cents)}</td>
