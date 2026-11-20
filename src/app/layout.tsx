@@ -36,12 +36,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="es">
       <body>
         <div className="flex min-h-screen flex-col pb-[calc(5.75rem+env(safe-area-inset-bottom))] sm:pb-24">
-          <Header storeName={settings.store_name || 'NOVASTORE'} telegramUrl={settings.telegram_url} />
+          <Header storeName={settings.store_name || 'NOVASTORE'} whatsappUrl={whatsappUrl} />
           <main className="flex-1">{children}</main>
           <Footer settings={settings} />
         </div>
         <BottomNav cartCount={cartCount} />
-        <FloatingContact telegramUrl={settings.telegram_url} whatsappUrl={whatsappUrl} />
+        <FloatingContact whatsappUrl={whatsappUrl} />
       </body>
     </html>
   );

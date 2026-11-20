@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Logo from './Logo';
 
 export default function Footer({ settings }: { settings: Record<string, string> }) {
-  const telegram = settings.telegram_url;
+  const whatsapp = settings.whatsapp_url;
   return (
     <footer className="mt-16 border-t border-purple-500/20 bg-[#07050d]/90">
       <div className="shell grid gap-10 py-12 md:grid-cols-4">
@@ -17,14 +17,17 @@ export default function Footer({ settings }: { settings: Record<string, string> 
             <a href="/contacto" className="btn btn-outline btn-sm">
               Contacto
             </a>
-            {telegram ? (
+            {whatsapp ? (
               <a
-                href={telegram}
+                href={whatsapp}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn btn-primary btn-sm"
+                className="btn btn-sm bg-gradient-to-r from-emerald-500 to-green-600 font-bold text-black"
               >
-                Canal de Telegram
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+                  <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2Zm5.8 14.06c-.25.7-1.45 1.34-2 1.39-.55.05-1.06.24-3.57-.79-3.02-1.24-4.92-4.36-5.07-4.56-.15-.2-1.21-1.62-1.21-3.09 0-1.47.77-2.19 1.04-2.49.27-.3.59-.37.79-.37.2 0 .4.01.57.02.18.01.43-.07.67.51.25.6.85 2.07.92 2.22.07.15.12.32.02.52-.1.2-.2.32-.35.5-.15.17-.31.31-.45.5-.15.2-.31.42-.13.72.18.3.8 1.32 1.72 2.14 1.18 1.05 2.17 1.38 2.47 1.53.3.15.48.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.67-.15.27.1 1.72.81 2.02.96.3.15.5.22.57.35.07.12.07.72-.18 1.42Z" />
+                </svg>
+                Canal de WhatsApp
               </a>
             ) : null}
           </div>

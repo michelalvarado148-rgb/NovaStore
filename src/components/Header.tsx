@@ -7,10 +7,10 @@ import { logoutAction } from '@/app/actions/session';
 
 type HeaderProps = {
   storeName: string;
-  telegramUrl?: string;
+  whatsappUrl?: string;
 };
 
-export default async function Header({ storeName, telegramUrl }: HeaderProps) {
+export default async function Header({ storeName, whatsappUrl }: HeaderProps) {
   const [user, cartCount] = await Promise.all([
     getCurrentUser().catch(() => null),
     getCartCount().catch(() => 0),
@@ -23,7 +23,7 @@ export default async function Header({ storeName, telegramUrl }: HeaderProps) {
   return (
     <HeaderBar
       storeName={storeName}
-      telegramUrl={telegramUrl}
+      whatsappUrl={whatsappUrl}
       cartCount={cartCount}
       categories={categories}
       user={user ? { name: user.name, role: user.role } : null}

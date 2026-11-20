@@ -33,14 +33,6 @@ export default async function AdminSettingsPage({
           <textarea name="store_description" rows={2} defaultValue={settings.store_description ?? ''} />
         </label>
         <label className="field md:col-span-2">
-          <span>Enlace del canal de Telegram</span>
-          <input
-            name="telegram_url"
-            defaultValue={settings.telegram_url ?? ''}
-            placeholder="https://t.me/tu_canal"
-          />
-        </label>
-        <label className="field md:col-span-2">
           <span>Enlace del canal de WhatsApp (banner de la página principal)</span>
           <input
             name="whatsapp_url"

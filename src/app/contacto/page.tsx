@@ -14,10 +14,10 @@ export default async function ContactPage() {
 
   const channels = [
     {
-      title: 'Canal de Telegram',
-      text: 'Novedades, ofertas y soporte rápido con nuestro equipo.',
-      href: settings.telegram_url,
-      cta: 'Abrir Telegram',
+      title: 'Canal de WhatsApp',
+      text: 'Entérate de nuestras ofertas, promociones, novedades y descuentos exclusivos.',
+      href: settings.whatsapp_url,
+      cta: 'Unirme al canal',
     },
     {
       title: 'Correo de soporte',
@@ -86,7 +86,7 @@ export default async function ContactPage() {
             ))}
             {methods.length === 0 ? (
               <li className="text-sm text-slate-400">
-                Aún no hay métodos de pago configurados. Contáctanos por Telegram.
+                Aún no hay métodos de pago configurados. Contáctanos por WhatsApp.
               </li>
             ) : null}
           </ul>
