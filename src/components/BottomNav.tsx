@@ -35,19 +35,13 @@ export default function BottomNav({ cartCount = 0 }: { cartCount?: number }) {
       ),
     },
     {
-      href: '/categorias',
-      label: 'Categorías',
-      matches: (path) =>
-        path === '/categorias' ||
-        path.startsWith('/productos') ||
-        path.startsWith('/categoria/') ||
-        path.startsWith('/producto/'),
+      href: '/cuenta/pedidos',
+      label: 'Mis compras',
+      matches: (path) => path.startsWith('/cuenta/pedidos') || path.startsWith('/pedido/'),
       icon: (
         <svg viewBox="0 0 24 24" {...iconProps}>
-          <rect x="4" y="4" width="7" height="7" rx="1.6" />
-          <rect x="13" y="4" width="7" height="7" rx="1.6" />
-          <rect x="4" y="13" width="7" height="7" rx="1.6" />
-          <rect x="13" y="13" width="7" height="7" rx="1.6" />
+          <path d="M6 3h9l3 3v15H6z" />
+          <path d="M9 9h6M9 13h6M9 17h4" />
         </svg>
       ),
     },
@@ -79,7 +73,9 @@ export default function BottomNav({ cartCount = 0 }: { cartCount?: number }) {
       href: '/cuenta',
       label: 'Cuenta',
       matches: (path) =>
-        path.startsWith('/cuenta') || path.startsWith('/login') || path.startsWith('/registro'),
+        (path.startsWith('/cuenta') && !path.startsWith('/cuenta/pedidos')) ||
+        path.startsWith('/login') ||
+        path.startsWith('/registro'),
       icon: (
         <svg viewBox="0 0 24 24" {...iconProps}>
           <circle cx="12" cy="8" r="3.5" />
