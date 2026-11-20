@@ -19,10 +19,13 @@ import {
  */
 export default function CheckoutForm({
   notices,
+  defaultValues,
   className,
   children,
 }: {
   notices: PublicProductNotice[];
+  /** Valores iniciales (por ejemplo, el ID de Free Fire que el cliente ya usó). */
+  defaultValues?: Record<string, string>;
   className?: string;
   children: React.ReactNode;
 }) {
@@ -31,7 +34,7 @@ export default function CheckoutForm({
   const confirmed = useRef(false);
   const [open, setOpen] = useState(false);
   const [ack, setAck] = useState(false);
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [values, setValues] = useState<Record<string, string>>(defaultValues ?? {});
 
   const missing = notices.flatMap((notice) =>
     notice.fields.filter(
@@ -174,9 +177,16 @@ export default function CheckoutForm({
                                   }))
                                 }
                                 className="input"
-                                placeholder={`Escribe tu ${field.label.toLowerCase()}`}
+                                placeholder={
+                                  field.placeholder ?? `Escribe tu ${field.label.toLowerCase()}`
+                                }
                                 aria-required={field.required}
                               />
+                              {field.hint ? (
+                                <span className="mt-1 block text-[0.68rem] font-medium text-fuchsia-200/90">
+                                  {field.hint}
+                                </span>
+                              ) : null}
                             </label>
                           );
                         })}

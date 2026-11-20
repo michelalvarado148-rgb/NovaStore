@@ -8,6 +8,7 @@ import CheckoutPayment from '@/components/CheckoutPayment';
 import CheckoutForm from '@/components/CheckoutForm';
 import ConfirmOrderButton from '@/components/ConfirmOrderButton';
 import { getActiveNotices, toPublicNotice } from '@/lib/product-notice';
+import { freeFireDefaults, getSavedFreeFireId, withFreeFireNotices } from '@/lib/freefire';
 import MaintenanceScreen from '@/components/MaintenanceScreen';
 import { isStoreClosed } from '@/lib/maintenance';
 
@@ -28,13 +29,15 @@ export default async function CheckoutPage({
   const settings = getSettings();
   const idempotencyKey = randomUUID();
 
-  // Avisos y requisitos configurados para los productos del carrito.
+  // Avisos y requisitos configurados para los productos del carrito. Los
+  // productos de Free Fire siempre piden el ID de jugador (campo obligatorio).
   const notices = Array.from(
-    getActiveNotices(cart.lines.map((line) => line.product_id)).entries(),
+    withFreeFireNotices(getActiveNotices(cart.lines.map((line) => line.product_id)), cart.lines).entries(),
   ).map(([productId, config]) => {
     const line = cart.lines.find((item) => item.product_id === productId);
     return toPublicNotice(productId, line?.name ?? 'Producto', config);
   });
+  const noticeDefaults = freeFireDefaults(notices, getSavedFreeFireId(user.id));
 
   if (cart.lines.length === 0) {
     return (
@@ -61,7 +64,11 @@ export default async function CheckoutPage({
         </div>
       ) : null}
 
-      <CheckoutForm notices={notices} className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+      <CheckoutForm
+        notices={notices}
+        defaultValues={noticeDefaults}
+        className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]"
+      >
         <input type="hidden" name="idempotency_key" value={idempotencyKey} />
 
         <div className="space-y-4">

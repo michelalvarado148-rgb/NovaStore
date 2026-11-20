@@ -10,7 +10,9 @@
  */
 import { getDb, nowIso } from './db';
 import {
+  MAX_FIELD_HINT,
   MAX_FIELD_LABEL,
+  MAX_FIELD_PLACEHOLDER,
   MAX_FIELD_VALUE,
   MAX_NOTICE_FIELDS,
   MAX_NOTICE_MESSAGE,
@@ -36,7 +38,7 @@ export type NoticeInput = {
   type: string;
   message: string;
   deliveryTime: string;
-  fields: { label: string; required: boolean }[];
+  fields: { label: string; required: boolean; hint?: string; placeholder?: string }[];
 };
 
 export const PRODUCT_NOTICE_PREFIX = 'product_notice:';
@@ -59,7 +61,18 @@ function normalizeFields(raw: unknown): NoticeField[] {
     const key = label.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    fields.push({ label, required: Boolean((item as { required?: unknown }).required) });
+    const hint = String((item as { hint?: unknown }).hint ?? '')
+      .trim()
+      .slice(0, MAX_FIELD_HINT);
+    const placeholder = String((item as { placeholder?: unknown }).placeholder ?? '')
+      .trim()
+      .slice(0, MAX_FIELD_PLACEHOLDER);
+    fields.push({
+      label,
+      required: Boolean((item as { required?: unknown }).required),
+      ...(hint ? { hint } : {}),
+      ...(placeholder ? { placeholder } : {}),
+    });
     if (fields.length >= MAX_NOTICE_FIELDS) break;
   }
   return fields;

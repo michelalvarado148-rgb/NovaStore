@@ -11,6 +11,10 @@ export type NoticeType = 'inmediata' | 'demora' | 'datos' | 'personalizado';
 export type NoticeField = {
   label: string;
   required: boolean;
+  /** Indicación corta que se muestra bajo el campo (opcional). */
+  hint?: string;
+  /** Texto de ejemplo dentro del campo (opcional). */
+  placeholder?: string;
 };
 
 /** Aviso tal como se muestra al cliente (sin datos internos). */
@@ -44,6 +48,8 @@ export const MAX_NOTICE_FIELDS = 5;
 export const MAX_NOTICE_MESSAGE = 600;
 export const MAX_FIELD_LABEL = 60;
 export const MAX_FIELD_VALUE = 120;
+export const MAX_FIELD_HINT = 160;
+export const MAX_FIELD_PLACEHOLDER = 60;
 
 export const NOTICE_TYPES: {
   value: NoticeType;
