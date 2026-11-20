@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { CART_COOKIE, getCurrentUser } from './auth';
 import { getDb, newToken, nowIso } from './db';
 import { computePricing, getActiveOffers, type Offer } from './catalog';
+import { getDurationLabels } from './product-duration';
 import {
   DEFAULT_QTY_CONFIG,
   readQtyConfig,
@@ -25,6 +26,8 @@ export type CartLine = {
   line_total_cents: number;
   stock: number | null;
   is_active: number;
+  /** Duración del servicio (solo productos de Streaming que la tengan configurada). */
+  duration: string | null;
   /** Cantidad personalizada configurada para el producto. */
   custom_qty: boolean;
   qty_basis: number;
@@ -156,6 +159,7 @@ export function buildCartDetail(cartId: number | null, offers?: Offer[]): CartDe
 
   const raws = rawLines(cartId);
   const qtyConfigs = readQtyConfigs(raws.map((raw) => raw.product_id));
+  const durationLabels = getDurationLabels(raws.map((raw) => raw.product_id));
 
   for (const raw of raws) {
     const qtyConfig = qtyConfigs.get(raw.product_id) ?? DEFAULT_QTY_CONFIG;
@@ -188,6 +192,7 @@ export function buildCartDetail(cartId: number | null, offers?: Offer[]): CartDe
       slug: raw.slug,
       image_url: raw.image_url,
       variant_name: raw.variant_name,
+      duration: durationLabels.get(raw.product_id) ?? null,
       unit_price_cents: unit,
       compare_price_cents: pricing.comparePriceCents,
       discount_percent: pricing.discountPercent,

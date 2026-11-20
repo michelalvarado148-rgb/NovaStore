@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
+import ProductDurationBadge from '@/components/ProductDurationBadge';
 import QuantitySelector from '@/components/QuantitySelector';
 import { readQtyConfig } from '@/lib/custom-quantity';
+import { getDurationLabels, readDuration } from '@/lib/product-duration';
 import { addToCartAction } from '@/app/actions/cart';
 import {
   computePricing,
@@ -49,6 +51,8 @@ export default async function ProductPage({
     (v) => v.stock === null || v.stock > 0,
   );
   const related = getRelatedProducts(product.category_id, product.id, 4);
+  const durationLabel = readDuration(product.id)?.label ?? null;
+  const relatedDurations = getDurationLabels(related.map((item) => item.id));
   const methods = getPaymentMethods(true);
   const settings = getSettings();
   const available = stockAvailable(product);
@@ -125,6 +129,13 @@ export default async function ProductPage({
           </div>
           {pricing.offerTitle ? (
             <p className="mt-1 text-xs font-semibold text-fuchsia-300">Oferta: {pricing.offerTitle}</p>
+          ) : null}
+
+          {durationLabel ? (
+            <div className="ns-duration-row mt-3">
+              <span className="ns-duration-label">Duración del servicio:</span>
+              <ProductDurationBadge label={durationLabel} size="md" />
+            </div>
           ) : null}
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -261,7 +272,13 @@ export default async function ProductPage({
           <h2 className="section-title mb-4">También te puede interesar</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {related.map((item, i) => (
-              <ProductCard key={item.id} product={item} offers={offers} index={i} />
+              <ProductCard
+                key={item.id}
+                product={item}
+                offers={offers}
+                index={i}
+                duration={relatedDurations.get(item.id) ?? null}
+              />
             ))}
           </div>
         </section>
