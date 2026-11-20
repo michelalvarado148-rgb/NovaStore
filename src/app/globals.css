@@ -443,6 +443,219 @@ body {
   scrollbar-width: none;
 }
 
+/* ============================================================
+   NOVASTORE · capa premium (azul eléctrico + detalles luminosos)
+   ============================================================ */
+:root {
+  --nova-blue: #2f6bff;
+  --nova-cyan: #38bdf8;
+  --nova-blue-soft: rgba(47, 107, 255, 0.16);
+}
+
+.nova-blue-text {
+  background: linear-gradient(100deg, #e0f2fe 0%, #7dd3fc 28%, #38bdf8 52%, #2f6bff 78%, #a855f7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.blue-glow {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+/* Banner principal + carrusel */
+.hero-banner {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.6rem;
+  border: 1px solid rgba(56, 189, 248, 0.24);
+  background:
+    radial-gradient(circle at 82% 18%, rgba(47, 107, 255, 0.4), transparent 55%),
+    radial-gradient(circle at 12% 92%, rgba(168, 85, 247, 0.34), transparent 58%),
+    linear-gradient(155deg, #0a1024 0%, #08060f 55%, #120a22 100%);
+  box-shadow: 0 34px 80px -46px rgba(47, 107, 255, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.slide-shell {
+  position: relative;
+  min-height: 21rem;
+}
+
+.slide-art {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.slide-art img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  opacity: 0.42;
+  transform: scale(1.03);
+  transition: transform 7s ease-out, opacity 0.6s ease;
+}
+.slide-shell[data-active="true"] .slide-art img {
+  transform: scale(1.12);
+  opacity: 0.55;
+}
+.slide-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(95deg, rgba(6, 5, 11, 0.96) 6%, rgba(8, 6, 18, 0.82) 46%, rgba(10, 8, 24, 0.42) 100%);
+}
+
+.dot {
+  height: 0.4rem;
+  width: 0.4rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.45);
+  transition: width 0.3s ease, background 0.3s ease;
+}
+.dot-active {
+  width: 1.6rem;
+  background: linear-gradient(90deg, #38bdf8, #2f6bff);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.7);
+}
+
+/* Tarjetas de categoría premium */
+.cat-tile {
+  position: relative;
+  display: flex;
+  min-height: 9.5rem;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  background: linear-gradient(165deg, #101a33, #0a0812);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s ease,
+    box-shadow 0.35s ease;
+}
+.cat-tile:hover {
+  transform: translateY(-5px);
+  border-color: rgba(56, 189, 248, 0.65);
+  box-shadow: 0 26px 55px -32px rgba(47, 107, 255, 0.95);
+}
+.cat-tile img {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  opacity: 0.72;
+  transition: transform 0.6s ease, opacity 0.4s ease;
+}
+.cat-tile:hover img {
+  transform: scale(1.08);
+  opacity: 0.9;
+}
+
+/* Paquetes compactos (recargas / diamantes / pases) */
+.pkg-grid {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fill, minmax(7.4rem, 1fr));
+}
+.pkg {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-height: 6.2rem;
+  padding: 0.85rem 0.6rem;
+  text-align: center;
+  border-radius: 1rem;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  background: linear-gradient(170deg, rgba(19, 27, 48, 0.95), rgba(9, 8, 18, 0.98));
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.pkg:hover {
+  transform: translateY(-3px);
+  border-color: rgba(56, 189, 248, 0.75);
+  box-shadow: 0 20px 40px -26px rgba(56, 189, 248, 0.95);
+}
+.pkg-off {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+}
+
+/* Filas compactas (streaming, apps, números virtuales) */
+.row-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.7rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(56, 189, 248, 0.16);
+  background: rgba(13, 16, 30, 0.85);
+  transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease;
+}
+.row-card:hover {
+  border-color: rgba(56, 189, 248, 0.6);
+  background: rgba(18, 24, 44, 0.95);
+  transform: translateX(3px);
+}
+
+/* Panel lateral de compra */
+.side-panel {
+  border-radius: 1.25rem;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  background: linear-gradient(165deg, rgba(16, 24, 45, 0.95), rgba(10, 8, 18, 0.97));
+  box-shadow: 0 26px 60px -40px rgba(47, 107, 255, 0.9);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: rgba(148, 163, 184, 0.1);
+  color: #cbd5e1;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+.chip:hover {
+  border-color: rgba(56, 189, 248, 0.6);
+  color: #fff;
+}
+.chip-active {
+  border-color: rgba(56, 189, 248, 0.8);
+  background: rgba(47, 107, 255, 0.22);
+  color: #e0f2fe;
+  box-shadow: 0 0 18px -6px rgba(56, 189, 248, 0.8);
+}
+
+/* Botones flotantes de contacto */
+.fab {
+  display: grid;
+  height: 3rem;
+  width: 3rem;
+  place-items: center;
+  border-radius: 999px;
+  color: #fff;
+  box-shadow: 0 16px 32px -14px rgba(0, 0, 0, 0.9);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.fab:hover {
+  transform: translateY(-3px) scale(1.04);
+}
+
+@media (min-width: 640px) {
+  .slide-shell {
+    min-height: 23rem;
+  }
+}
+
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
