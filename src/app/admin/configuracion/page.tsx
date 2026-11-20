@@ -40,6 +40,17 @@ export default async function AdminSettingsPage({
             placeholder="https://t.me/tu_canal"
           />
         </label>
+        <label className="field md:col-span-2">
+          <span>Enlace del canal de WhatsApp (banner de la página principal)</span>
+          <input
+            name="whatsapp_url"
+            defaultValue={settings.whatsapp_url ?? ''}
+            placeholder="https://whatsapp.com/channel/..."
+          />
+          <small className="text-[0.68rem] text-[#8a9bb0]">
+            Si lo dejas vacío, el banner de WhatsApp no se mostrará en la página principal.
+          </small>
+        </label>
         <label className="field">
           <span>Correo de contacto</span>
           <input name="contact_email" defaultValue={settings.contact_email ?? ''} type="email" />

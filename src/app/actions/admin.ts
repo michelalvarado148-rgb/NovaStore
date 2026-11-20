@@ -351,6 +351,7 @@ export async function saveSettingsAction(formData: FormData) {
     'store_tagline',
     'store_description',
     'telegram_url',
+    'whatsapp_url',
     'contact_email',
     'contact_phone',
     'support_hours',
@@ -363,6 +364,10 @@ export async function saveSettingsAction(formData: FormData) {
   for (const key of keys) {
     const value = formData.get(key);
     if (value !== null) entries[key] = String(value).trim();
+  }
+  // Acepta el enlace del canal escrito sin protocolo (whatsapp.com/channel/...).
+  if (entries.whatsapp_url && !/^https?:\/\//i.test(entries.whatsapp_url)) {
+    entries.whatsapp_url = 'https://' + entries.whatsapp_url.replace(/^\/+/, '');
   }
   saveSettings(entries);
   revalidatePath('/', 'layout');

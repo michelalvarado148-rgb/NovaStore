@@ -2,6 +2,7 @@ import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
 import CategoryRail from '@/components/home/CategoryRail';
 import BannerCarousel, { type BannerSlide } from '@/components/home/BannerCarousel';
+import WhatsAppBanner from '@/components/home/WhatsAppBanner';
 import MaintenanceScreen from '@/components/MaintenanceScreen';
 import { isStoreClosed } from '@/lib/maintenance';
 import {
@@ -31,7 +32,8 @@ export default async function HomePage() {
   const featured = getProducts({ featuredOnly: true, limit: 8 });
   const showcase = featured.length > 0 ? featured : products.slice(0, 6);
   const recent = getRecentPurchases(4);
-  const telegramUrl = settings.telegram_url || '';
+  // Banner de comunidad: solo con el enlace del canal de WhatsApp configurado.
+  const whatsappChannel = settings.whatsapp_url || '';
 
   /* ---------------- Banners: solo con contenido real ---------------- */
   const slides: BannerSlide[] = [];
@@ -80,18 +82,6 @@ export default async function HomePage() {
     });
   }
 
-  if (telegramUrl) {
-    slides.push({
-      id: 'telegram',
-      eyebrow: 'Comunidad',
-      title: 'Únete a nuestro Telegram',
-      subtitle: 'Ofertas, novedades y soporte directo con el equipo.',
-      ctaLabel: 'Entrar al canal',
-      ctaHref: telegramUrl,
-      mark: 'TG',
-    });
-  }
-
   if (slides.length === 0) {
     slides.push({
       id: 'bienvenida',
@@ -111,6 +101,8 @@ export default async function HomePage() {
       <div className="ns-shell pt-3">
         <BannerCarousel slides={slides} />
       </div>
+
+      <WhatsAppBanner href={whatsappChannel} />
 
       <section className="ns-shell mt-6">
         <div className="ns-sec-head">
@@ -235,11 +227,6 @@ export default async function HomePage() {
             <Link href="/cuenta/soporte" className="ns-btn ns-btn-ghost">
               Chat de soporte
             </Link>
-            {telegramUrl ? (
-              <a href={telegramUrl} target="_blank" rel="noopener noreferrer" className="ns-btn ns-btn-ghost">
-                Telegram
-              </a>
-            ) : null}
           </div>
         </div>
       </section>

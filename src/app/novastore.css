@@ -936,3 +936,91 @@
   line-height: 1;
   box-shadow: 0 0 8px rgba(255, 59, 48, 0.7);
 }
+
+/* ---------------- Banner de comunidad de WhatsApp ---------------- */
+.ns-wa-banner {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: 1.25rem;
+  background: linear-gradient(135deg, #0a1410 0%, #0b1a13 55%, #07120d 100%);
+  border: 1px solid rgba(37, 211, 102, 0.28);
+  box-shadow: 0 18px 40px -24px rgba(37, 211, 102, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+.ns-wa-glow {
+  position: absolute;
+  right: -20%;
+  bottom: -60%;
+  width: 14rem;
+  height: 14rem;
+  background: radial-gradient(circle, rgba(37, 211, 102, 0.28), transparent 65%);
+  pointer-events: none;
+}
+.ns-wa-ico {
+  width: 3.1rem;
+  height: 3.1rem;
+  border-radius: 1rem;
+  display: grid;
+  place-items: center;
+  color: #04140c;
+  background: linear-gradient(160deg, #3ee07c, #25d366 55%, #12a85a);
+  box-shadow: 0 10px 24px -10px rgba(37, 211, 102, 0.8);
+}
+.ns-wa-ico svg { width: 1.75rem; height: 1.75rem; }
+.ns-wa-body { min-width: 0; }
+.ns-wa-eyebrow {
+  margin: 0 0 0.15rem;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #4fe08a;
+}
+.ns-wa-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1.25;
+  color: #ffffff;
+}
+.ns-wa-text {
+  margin: 0.25rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: #9fb3a7;
+}
+.ns-wa-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.62rem 1rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #3ee07c, #25d366);
+  color: #04140c;
+  font-size: 0.78rem;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 0 12px 26px -12px rgba(37, 211, 102, 0.9);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.ns-wa-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 30px -12px rgba(37, 211, 102, 1);
+}
+.ns-wa-btn svg { width: 1rem; height: 1rem; }
+@media (max-width: 640px) {
+  .ns-wa-banner {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.8rem;
+    padding: 1rem;
+  }
+  .ns-wa-btn {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
