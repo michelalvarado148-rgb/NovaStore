@@ -63,7 +63,7 @@ export default function BannerCarousel({ slides }: { slides: BannerSlide[] }) {
     <div>
       <div className="ns-banners" ref={trackRef} aria-label="Promociones destacadas">
         {slides.map((slide, index) => (
-          <article className="ns-banner" key={slide.id} aria-label={slide.title} aria-hidden={index !== active ? undefined : undefined}>
+          <article className="ns-banner" key={slide.id} aria-label={slide.title}>
             {slide.imageUrl ? <img src={slide.imageUrl} alt="" loading={index === 0 ? 'eager' : 'lazy'} /> : null}
             <span className="ns-banner-glow" aria-hidden="true" />
             {slide.mark ? (

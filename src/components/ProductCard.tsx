@@ -15,7 +15,7 @@ function StockBadge({ stock }: { stock: number | null }) {
   return <span className="badge badge-success">{stock} disponibles</span>;
 }
 
-export type ProductCardVariant = 'grid' | 'compact' | 'row';
+export type ProductCardVariant = 'grid' | 'compact' | 'row' | 'shop';
 
 function Price({
   priceCents,
@@ -141,6 +141,60 @@ export default function ProductCard({
           </div>
         </div>
       </Link>
+    );
+  }
+
+  if (variant === 'shop') {
+    const tag = product.is_featured
+      ? { label: 'Popular', icon: 'fire' as const }
+      : pricing.discountPercent > 0
+        ? { label: 'Recomendado', icon: 'star' as const }
+        : null;
+
+    return (
+      <article className={`ns-prod animate-fade-up ${soldOut ? 'opacity-80' : ''}`} style={delay}>
+        <Link href={href} className="ns-prod-media" aria-label={product.name}>
+          {product.image_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={product.image_url} alt={product.name} loading="lazy" />
+          ) : (
+            <span className="ns-prod-fallback">{product.name.slice(0, 2).toUpperCase()}</span>
+          )}
+          {tag ? (
+            <span className="ns-tag">
+              {tag.icon === 'fire' ? (
+                <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="currentColor" aria-hidden="true">
+                  <path d="M13 2c.5 3-1.2 4.2-2.6 5.6C8.9 9 7.5 10.6 7.5 13a4.5 4.5 0 0 0 9 0c0-1.2-.4-2.3-1-3.2-.4 1-1 1.6-1.8 1.9.6-3.4-.2-7-1.7-9.7Z" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="currentColor" aria-hidden="true">
+                  <path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3Z" />
+                </svg>
+              )}
+              {tag.label}
+            </span>
+          ) : null}
+          {soldOut ? <span className="ns-tag ns-tag-muted">Agotado</span> : null}
+        </Link>
+
+        <div className="ns-prod-body">
+          <h3 className="ns-prod-name">
+            <Link href={href}>{product.name}</Link>
+          </h3>
+          <p className="ns-prod-desc">{product.description}</p>
+          <div className="ns-prod-foot">
+            <span className="ns-price">{formatPEN(pricing.priceCents)}</span>
+            <Link href={href} className={`ns-buy ${soldOut ? 'is-sold' : ''}`}>
+              <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.6L21 8H6" />
+                <circle cx="10" cy="20" r="1.3" />
+                <circle cx="18" cy="20" r="1.3" />
+              </svg>
+              {soldOut ? 'Ver' : 'Comprar'}
+            </Link>
+          </div>
+        </div>
+      </article>
     );
   }
 
