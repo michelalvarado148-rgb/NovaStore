@@ -2,6 +2,7 @@ import Link from 'next/link';
 import MaintenanceScreen from '@/components/MaintenanceScreen';
 import { isStoreClosed } from '@/lib/maintenance';
 import ProductCard from '@/components/ProductCard';
+import { getDurationLabels } from '@/lib/product-duration';
 import {
   computePricing,
   getActiveOffers,
@@ -53,6 +54,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
   const visible = onlyOffers
     ? products.filter((p) => computePricing(p, offers).discountPercent > 0)
     : products;
+  const durationLabels = getDurationLabels(visible.map((product) => product.id));
   const activeCategory = allCategories.find((c) => c.slug === categorySlug) ?? null;
   const subcategories = activeCategory ? getSubcategories(activeCategory.id) : [];
   const ancestors = activeCategory ? getCategoryAncestors(activeCategory) : [];
@@ -303,7 +305,13 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visible.map((product, i) => (
-            <ProductCard key={product.id} product={product} offers={offers} index={i} />
+            <ProductCard
+              key={product.id}
+              product={product}
+              offers={offers}
+              index={i}
+              duration={durationLabels.get(product.id) ?? null}
+            />
           ))}
         </div>
       )}

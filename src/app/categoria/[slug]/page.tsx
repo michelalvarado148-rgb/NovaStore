@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import ProductCard from '@/components/ProductCard';
+import { getDurationLabels } from '@/lib/product-duration';
 import CategoryCard from '@/components/CategoryCard';
 import MaintenanceScreen from '@/components/MaintenanceScreen';
 import { isStoreClosed } from '@/lib/maintenance';
@@ -274,6 +275,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const products = getProducts({ limit: 500 }).filter(
     (product) => product.category_id !== null && ids.has(product.category_id),
   );
+  const durationLabels = getDurationLabels(products.map((product) => product.id));
   const kind = detectCategoryKind(category, products);
   const meta = KIND_META[kind];
   const minPrice = products.length > 0 ? Math.min(...products.map((p) => p.price_cents)) : null;
@@ -415,13 +417,20 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
                   offers={offers}
                   index={index}
                   variant="row"
+                  duration={durationLabels.get(product.id) ?? null}
                 />
               ))}
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {products.map((product, index) => (
-                <ProductCard key={product.id} product={product} offers={offers} index={index} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  offers={offers}
+                  index={index}
+                  duration={durationLabels.get(product.id) ?? null}
+                />
               ))}
             </div>
           )}

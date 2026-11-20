@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
+import { getDurationLabels } from '@/lib/product-duration';
 import CategoryRail from '@/components/home/CategoryRail';
 import BannerCarousel, { type BannerSlide } from '@/components/home/BannerCarousel';
 import WhatsAppBanner from '@/components/home/WhatsAppBanner';
@@ -26,6 +27,7 @@ export default async function HomePage() {
   const offers = getActiveOffers();
   const products = getProducts({ limit: 200 });
   const priced = products.map((product) => ({ product, pricing: computePricing(product, offers) }));
+  const durationLabels = getDurationLabels(products.map((product) => product.id));
   const discounted = priced
     .filter((row) => row.pricing.discountPercent > 0)
     .sort((a, b) => b.pricing.discountPercent - a.pricing.discountPercent);
@@ -136,7 +138,14 @@ export default async function HomePage() {
         ) : (
           <div className="ns-grid">
             {showcase.map((product, index) => (
-              <ProductCard key={product.id} product={product} offers={offers} variant="shop" index={index} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                offers={offers}
+                variant="shop"
+                index={index}
+                duration={durationLabels.get(product.id) ?? null}
+              />
             ))}
           </div>
         )}
@@ -157,7 +166,13 @@ export default async function HomePage() {
           <div className="flex gap-3 overflow-x-auto pb-1">
             {discounted.slice(0, 8).map((row, index) => (
               <div key={row.product.id} className="w-[9.6rem] shrink-0">
-                <ProductCard product={row.product} offers={offers} variant="shop" index={index} />
+                <ProductCard
+                  product={row.product}
+                  offers={offers}
+                  variant="shop"
+                  index={index}
+                  duration={durationLabels.get(row.product.id) ?? null}
+                />
               </div>
             ))}
           </div>
