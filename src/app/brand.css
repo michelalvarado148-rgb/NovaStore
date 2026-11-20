@@ -1,0 +1,227 @@
+/* ============================================================
+   Identidad visual NOVASTORE — logo oficial
+   Colores de la marca: morado, negro y plateado.
+   ============================================================ */
+
+/* --- Logo en la cabecera de la tienda --- */
+.ns-logo-img {
+  height: 2.15rem;
+  width: 2.15rem;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 0.7rem;
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  background: #0b0714;
+  box-shadow:
+    0 0 16px rgba(139, 92, 246, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.ns-logo:hover .ns-logo-img,
+.ns-drawer-head:hover .ns-logo-img {
+  box-shadow:
+    0 0 26px rgba(168, 85, 247, 0.85),
+    0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+  transform: scale(1.04);
+}
+
+/* --- Logo en el encabezado del panel administrativo --- */
+.ns-admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+.ns-admin-logo {
+  height: 3.25rem;
+  width: 3.25rem;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 1rem;
+  border: 1px solid rgba(168, 85, 247, 0.5);
+  background: #0b0714;
+  box-shadow:
+    0 0 24px rgba(139, 92, 246, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.07) inset;
+}
+
+/* --- Pantalla de inicio (splash) --- */
+.ns-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(circle at 50% 38%, #1b0f33 0%, #0b0714 48%, #05030a 100%);
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.45s ease, visibility 0.45s ease;
+}
+.ns-splash.is-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.ns-splash-glow {
+  position: absolute;
+  width: min(78vw, 420px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.42), rgba(139, 92, 246, 0) 66%);
+  filter: blur(10px);
+  animation: ns-splash-pulse 2.6s ease-in-out infinite;
+}
+.ns-splash-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  animation: ns-splash-rise 0.8s cubic-bezier(0.2, 0.8, 0.25, 1) both;
+}
+.ns-splash-logo {
+  height: clamp(96px, 26vw, 134px);
+  width: auto;
+  object-fit: cover;
+  border-radius: 1.35rem;
+  border: 1px solid rgba(168, 85, 247, 0.55);
+  background: #0b0714;
+  box-shadow:
+    0 0 44px rgba(139, 92, 246, 0.75),
+    0 14px 40px rgba(0, 0, 0, 0.65);
+  animation: ns-splash-logo 0.9s cubic-bezier(0.2, 0.8, 0.25, 1) both;
+}
+.ns-splash-name {
+  margin-top: 0.35rem;
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  color: #ffffff;
+  text-indent: 0.22em;
+}
+.ns-splash-name span {
+  color: #a855f7;
+}
+.ns-splash-tag {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: #b6a8d6;
+}
+.ns-splash-bar {
+  margin-top: 0.45rem;
+  width: min(52vw, 190px);
+  height: 3px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+}
+.ns-splash-bar span {
+  display: block;
+  height: 100%;
+  width: 42%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7c3aed, #c084fc, #e9d5ff);
+  animation: ns-splash-load 1.35s ease-in-out infinite;
+}
+
+/* --- Pantalla de carga de datos --- */
+.ns-loader {
+  min-height: 58vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+.ns-loader-logo {
+  height: 84px;
+  width: 84px;
+  object-fit: cover;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(168, 85, 247, 0.5);
+  background: #0b0714;
+  box-shadow: 0 0 32px rgba(139, 92, 246, 0.6);
+  animation: ns-loader-pulse 1.9s ease-in-out infinite;
+}
+.ns-loader-text {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #c4b5fd;
+}
+.ns-loader-bar {
+  width: min(58vw, 200px);
+  height: 3px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+}
+.ns-loader-bar span {
+  display: block;
+  height: 100%;
+  width: 38%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7c3aed, #c084fc);
+  animation: ns-splash-load 1.4s ease-in-out infinite;
+}
+
+@keyframes ns-splash-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ns-splash-logo {
+  0% { opacity: 0; transform: scale(0.82); filter: blur(6px); }
+  60% { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+@keyframes ns-splash-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(0.94); }
+  50% { opacity: 0.95; transform: scale(1.04); }
+}
+@keyframes ns-splash-load {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(320%); }
+}
+@keyframes ns-loader-pulse {
+  0%, 100% { box-shadow: 0 0 26px rgba(139, 92, 246, 0.5); transform: scale(1); }
+  50% { box-shadow: 0 0 42px rgba(168, 85, 247, 0.8); transform: scale(1.03); }
+}
+
+/* --- Adaptación a celulares --- */
+@media (max-width: 480px) {
+  .ns-logo-img {
+    height: 1.95rem;
+    width: 1.95rem;
+    border-radius: 0.62rem;
+  }
+  .ns-admin-logo {
+    height: 2.6rem;
+    width: 2.6rem;
+    border-radius: 0.8rem;
+  }
+  .ns-loader-logo {
+    height: 72px;
+    width: 72px;
+  }
+}
+
+/* --- Respeto por quien prefiere menos movimiento --- */
+@media (prefers-reduced-motion: reduce) {
+  .ns-splash-glow,
+  .ns-splash-card,
+  .ns-splash-logo,
+  .ns-splash-bar span,
+  .ns-loader-logo,
+  .ns-loader-bar span {
+    animation: none !important;
+  }
+  .ns-splash,
+  .ns-logo-img {
+    transition: none !important;
+  }
+}

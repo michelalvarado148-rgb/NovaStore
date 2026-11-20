@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import './novastore.css';
+import './brand.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BottomNav from '@/components/BottomNav';
 import FloatingContact from '@/components/FloatingContact';
+import BrandSplash from '@/components/BrandSplash';
 import { getSettings } from '@/lib/catalog';
 import { getCartCount } from '@/lib/cart';
 
@@ -35,6 +37,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="es">
       <body>
+        <BrandSplash />
         <div className="flex min-h-screen flex-col pb-[calc(5.75rem+env(safe-area-inset-bottom))] sm:pb-24">
           <Header storeName={settings.store_name || 'NOVASTORE'} whatsappUrl={whatsappUrl} />
           <main className="flex-1">{children}</main>

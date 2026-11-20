@@ -70,9 +70,15 @@ export default function HeaderBar({
         </button>
 
         <Link href="/" className="ns-logo" aria-label={name}>
-          <span className="ns-logo-mark" aria-hidden="true">
-            <CartIcon className="h-[1.15rem] w-[1.15rem]" />
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/logo-ns-192.png"
+            alt=""
+            width={38}
+            height={38}
+            className="ns-logo-img"
+            aria-hidden="true"
+          />
           <span className="ns-logo-copy">
             <span className="ns-logo-text">
               {isNova ? (
@@ -150,9 +156,15 @@ export default function HeaderBar({
           />
           <aside className="ns-drawer" aria-label="Menú principal">
             <div className="ns-drawer-head">
-              <span className="ns-logo-mark" aria-hidden="true">
-                <CartIcon className="h-[1.15rem] w-[1.15rem]" />
-              </span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/brand/logo-ns-192.png"
+                alt=""
+                width={34}
+                height={34}
+                className="ns-logo-img"
+                aria-hidden="true"
+              />
               <span className="ns-logo-copy">
                 <span className="ns-logo-text">
                   {isNova ? (

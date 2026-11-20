@@ -28,11 +28,21 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="shell py-6">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-purple-500/25 bg-[#0e0a1a]/80 p-4">
-        <div>
-          <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-fuchsia-300">
-            Panel administrativo
-          </p>
-          <p className="text-lg font-black text-white">{admin.name}</p>
+        <div className="ns-admin-brand">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/logo-ns-192.png"
+            alt="NOVASTORE"
+            width={52}
+            height={52}
+            className="ns-admin-logo"
+          />
+          <div>
+            <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-fuchsia-300">
+              Panel administrativo · NOVASTORE
+            </p>
+            <p className="text-lg font-black text-white">{admin.name}</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/" className="btn btn-ghost btn-sm">Ver tienda</Link>
