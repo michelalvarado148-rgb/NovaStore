@@ -15,6 +15,15 @@ import {
   stockAvailable,
 } from '@/lib/catalog';
 import { formatPEN, statusTone } from '@/lib/format';
+import { getCurrentUser } from '@/lib/auth';
+import {
+  FREE_FIRE_FIELD_HINT,
+  FREE_FIRE_FIELD_PLACEHOLDER,
+  FREE_FIRE_ID_MAX,
+  FREE_FIRE_ID_MIN,
+  getSavedFreeFireId,
+  isFreeFireProduct,
+} from '@/lib/freefire';
 import MaintenanceScreen from '@/components/MaintenanceScreen';
 import { isStoreClosed } from '@/lib/maintenance';
 
@@ -44,6 +53,12 @@ export default async function ProductPage({
   const settings = getSettings();
   const available = stockAvailable(product);
   const soldOut = available !== null && available <= 0;
+
+  // Solo los productos de la categoría Free Fire (o sus subcategorías) piden el
+  // ID de jugador. Se recuerda el último ID del cliente para no repetirlo.
+  const freeFireProduct = isFreeFireProduct(product.id);
+  const currentUser = freeFireProduct ? await getCurrentUser() : null;
+  const savedFreeFireId = currentUser ? getSavedFreeFireId(currentUser.id) : '';
 
   return (
     <div className="shell py-8">
@@ -129,6 +144,35 @@ export default async function ProductPage({
           <form action={addToCartAction} className="panel-flat mt-6 space-y-4 p-4">
             <input type="hidden" name="product_id" value={product.id} />
             <input type="hidden" name="back" value={`/producto/${product.slug}`} />
+
+            {freeFireProduct ? (
+              <div className="rounded-xl border border-fuchsia-500/30 bg-fuchsia-500/[0.07] p-3">
+                <label htmlFor="ff_player_id" className="label">
+                  {FREE_FIRE_FIELD_PLACEHOLDER} <span className="text-fuchsia-300">*</span>
+                </label>
+                <input
+                  id="ff_player_id"
+                  name="ff_player_id"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  required
+                  minLength={FREE_FIRE_ID_MIN}
+                  maxLength={FREE_FIRE_ID_MAX}
+                  pattern="[0-9]*"
+                  defaultValue={savedFreeFireId}
+                  placeholder="Ej.: 123456789"
+                  className="input"
+                  aria-describedby="ff_player_id_hint"
+                />
+                <p
+                  id="ff_player_id_hint"
+                  className="mt-1 text-[0.7rem] font-medium leading-relaxed text-fuchsia-200/90"
+                >
+                  {FREE_FIRE_FIELD_HINT}
+                </p>
+              </div>
+            ) : null}
 
             {variants.length > 0 ? (
               <div>
