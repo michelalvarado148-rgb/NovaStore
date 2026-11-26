@@ -130,18 +130,41 @@ export default async function NovaWalletPage({
         <section id="recarga" className="panel overflow-hidden">
           <div className="border-b border-white/5 p-5">
             <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-purple-200">
-              Agregar dinero por Yape
+              Agregar dinero con QR
             </h2>
             <p className="muted mt-1 text-xs">
-              Envía tu dinero por Yape y registra el monto con la foto de tu comprobante.
+              Escanea el QR del administrador, paga el monto y registra aquí la foto de tu
+              comprobante.
             </p>
           </div>
           <div className="space-y-4 p-5">
             <div className="rounded-2xl border border-purple-500/25 bg-slate-900/60 p-4">
-              {config.yape_number ? (
+              {config.qr_url ? (
                 <>
                   <p className="text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-purple-300">
-                    Yape
+                    Escanea el QR para pagar
+                  </p>
+                  <div className="mt-2 inline-block rounded-xl bg-white p-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={config.qr_url}
+                      alt="QR de pago de NovaWallet"
+                      className="h-48 w-48 object-contain"
+                    />
+                  </div>
+                  <ol className="mt-3 space-y-1 text-xs text-slate-300">
+                    <li>1. Abre Yape o Plin y escanea el QR.</li>
+                    <li>
+                      2. Paga el monto que quieres agregar
+                      {config.yape_holder ? ` a nombre de ${config.yape_holder}` : ''}.
+                    </li>
+                    <li>3. Sube la foto de tu comprobante aquí abajo.</li>
+                  </ol>
+                </>
+              ) : config.yape_number ? (
+                <>
+                  <p className="text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-purple-300">
+                    Yape (el QR todavía no está configurado)
                   </p>
                   <p className="mt-1 text-xl font-black tracking-wide text-white">
                     {config.yape_number}
@@ -152,7 +175,7 @@ export default async function NovaWalletPage({
                 </>
               ) : (
                 <p className="text-sm text-amber-200">
-                  El administrador todavía no configuró su número de Yape. Escríbenos por Soporte.
+                  El administrador todavía no configuró su QR de pago. Escríbenos por Soporte.
                 </p>
               )}
               <p className="muted mt-2 text-[0.7rem]">
@@ -200,7 +223,7 @@ export default async function NovaWalletPage({
                   name="note"
                   rows={2}
                   maxLength={300}
-                  placeholder="Ej. Envié el Yape a nombre de…"
+                  placeholder="Ej. Pagué con el QR a nombre de…"
                   className="input mt-1.5 w-full resize-y"
                 />
               </label>
