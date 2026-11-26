@@ -119,19 +119,25 @@ export async function saveWalletConfigAction(formData: FormData) {
   );
 }
 
-/** Aprueba o rechaza una recarga o un retiro. El saldo solo cambia al aprobar. */
-export async function reviewWalletRequestAction(formData: FormData) {
+/**
+ * Revisa una solicitud con la decisión recibida por parámetro. Los botones del panel
+ * llaman a su propia acción (approve/reject) porque el valor del botón pulsado no
+ * llega de forma fiable en el FormData de una acción de servidor.
+ */
+async function reviewWalletSubmission(
+  formData: FormData,
+  action: 'aprobar' | 'rechazar',
+): Promise<never> {
   const admin = await requireAdmin(ADMIN_PATH);
   const id = Number(formData.get('id') ?? 0);
-  const action = String(formData.get('action') ?? '');
 
-  if (!id || (action !== 'aprobar' && action !== 'rechazar')) {
+  if (!id) {
     redirect(`${ADMIN_PATH}?error=${encodeURIComponent('Solicitud inválida.')}#solicitudes`);
   }
 
   const result = reviewWalletRequest({
     id,
-    action: action as 'aprobar' | 'rechazar',
+    action,
     adminId: admin.id,
     adminNote: String(formData.get('admin_note') ?? ''),
   });
@@ -149,4 +155,25 @@ export async function reviewWalletRequestAction(formData: FormData) {
         : 'Solicitud rechazada. El cliente verá el motivo.',
     )}#solicitudes`,
   );
+}
+
+/** Botón «Aprobar»: la decisión va en la acción, no en el valor del botón. */
+export async function approveWalletRequestAction(formData: FormData) {
+  await reviewWalletSubmission(formData, 'aprobar');
+}
+
+/** Botón «Rechazar»: el cliente verá el motivo indicado en la nota. */
+export async function rejectWalletRequestAction(formData: FormData) {
+  await reviewWalletSubmission(formData, 'rechazar');
+}
+
+/** Compatibilidad: mantiene la revisión con la decisión en el campo `action`. */
+export async function reviewWalletRequestAction(formData: FormData) {
+  const action = String(formData.get('action') ?? '');
+
+  if (action !== 'aprobar' && action !== 'rechazar') {
+    redirect(`${ADMIN_PATH}?error=${encodeURIComponent('Solicitud inválida.')}#solicitudes`);
+  }
+
+  await reviewWalletSubmission(formData, action);
 }

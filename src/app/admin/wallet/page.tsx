@@ -6,7 +6,12 @@ import {
   listAllWalletMovements,
   listWalletRequests,
 } from '@/lib/wallet';
-import { reviewWalletRequestAction, saveWalletConfigAction } from '@/app/actions/wallet';
+import {
+  approveWalletRequestAction,
+  rejectWalletRequestAction,
+  reviewWalletRequestAction,
+  saveWalletConfigAction,
+} from '@/app/actions/wallet';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'NovaWallet · Panel' };
@@ -263,10 +268,18 @@ export default async function AdminWalletPage({
                       maxLength={300}
                       className="input w-full sm:w-64"
                     />
-                    <button type="submit" name="action" value="aprobar" className="btn btn-primary btn-sm">
+                    <button
+                      type="submit"
+                      formAction={approveWalletRequestAction}
+                      className="btn btn-primary btn-sm"
+                    >
                       Aprobar recarga
                     </button>
-                    <button type="submit" name="action" value="rechazar" className="btn btn-outline btn-sm">
+                    <button
+                      type="submit"
+                      formAction={rejectWalletRequestAction}
+                      className="btn btn-outline btn-sm"
+                    >
                       Rechazar
                     </button>
                   </form>
@@ -319,10 +332,18 @@ export default async function AdminWalletPage({
                       maxLength={300}
                       className="input w-full sm:w-64"
                     />
-                    <button type="submit" name="action" value="aprobar" className="btn btn-primary btn-sm">
+                    <button
+                      type="submit"
+                      formAction={approveWalletRequestAction}
+                      className="btn btn-primary btn-sm"
+                    >
                       Aprobar retiro
                     </button>
-                    <button type="submit" name="action" value="rechazar" className="btn btn-outline btn-sm">
+                    <button
+                      type="submit"
+                      formAction={rejectWalletRequestAction}
+                      className="btn btn-outline btn-sm"
+                    >
                       Rechazar
                     </button>
                   </form>
