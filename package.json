@@ -17,7 +17,8 @@
     "test:bootstrap": "tsx scripts/admin-bootstrap-regression.ts",
     "test:qr": "tsx scripts/payment-qr-regression.ts",
     "test:push": "tsx scripts/push-regression.ts",
-    "test:subcategorias": "tsx scripts/subcategories-regression.ts"
+    "test:subcategorias": "tsx scripts/subcategories-regression.ts",
+    "test:wallet:qr": "tsx scripts/wallet-qr-regression.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",

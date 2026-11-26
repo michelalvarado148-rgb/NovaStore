@@ -8,10 +8,13 @@ import {
 } from '@/lib/wallet';
 import {
   approveWalletRequestAction,
+  clearWalletQrAction,
   rejectWalletRequestAction,
   reviewWalletRequestAction,
   saveWalletConfigAction,
+  saveWalletQrAction,
 } from '@/app/actions/wallet';
+import ImagePicker from '@/components/admin/ImagePicker';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'NovaWallet · Panel' };
@@ -105,12 +108,13 @@ export default async function AdminWalletPage({
           Configuración de NovaWallet
         </h2>
         <p className="muted mt-1 text-xs">
-          Número de Yape, avisos para el cliente, comisiones y montos mínimos.
+          Número de Yape de respaldo, avisos para el cliente, comisiones y montos mínimos. El QR
+          de pago se administra en su propia sección.
         </p>
 
         <form action={saveWalletConfigAction} className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="block text-sm text-slate-300">
-            Número de Yape
+            Número de Yape (respaldo, opcional)
             <input
               type="text"
               name="yape_number"
@@ -210,6 +214,63 @@ export default async function AdminWalletPage({
             </button>
           </div>
         </form>
+      </section>
+
+      <section id="qr" className="rounded-2xl border border-white/10 bg-[#0e0a1a]/70 p-5">
+        <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-purple-200">
+          QR de pago de NovaWallet
+        </h2>
+        <p className="muted mt-1 text-xs">
+          Los clientes ven este QR cuando pulsan «Agregar dinero». Se guarda en Supabase y se
+          actualiza al instante en todos los dispositivos.
+        </p>
+
+        <div className="mt-4 flex flex-wrap items-start gap-5">
+          <div className="rounded-2xl bg-white p-3">
+            {config.qr_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={config.qr_url}
+                alt="QR de NovaWallet configurado"
+                className="h-44 w-44 object-contain"
+              />
+            ) : (
+              <div className="grid h-44 w-44 place-items-center px-3 text-center text-[0.7rem] leading-snug text-slate-500">
+                Todavía no hay un QR configurado
+              </div>
+            )}
+          </div>
+          <div className="min-w-[12rem] flex-1 space-y-2">
+            <span className={config.qr_url ? 'badge badge-success' : 'badge badge-warning'}>
+              {config.qr_url ? 'QR activo' : 'QR sin configurar'}
+            </span>
+            <p className="muted text-xs">
+              {config.qr_url
+                ? 'Este es el QR que ven los clientes. Para cambiarlo, sube otra imagen y guarda: el anterior se reemplaza.'
+                : 'Mientras no subas una imagen, los clientes ven el aviso de que el QR todavía no está disponible. No se usa ningún QR de ejemplo.'}
+            </p>
+          </div>
+        </div>
+
+        <form action={saveWalletQrAction} className="mt-4 space-y-3 border-t border-white/5 pt-4">
+          <ImagePicker
+            name="wallet_qr_url"
+            label="Imagen del QR de NovaWallet"
+            folder="pagos"
+            defaultValue={config.qr_url}
+          />
+          <button type="submit" className="btn btn-primary">
+            Guardar QR de NovaWallet
+          </button>
+        </form>
+
+        {config.qr_url ? (
+          <form action={clearWalletQrAction} className="mt-3 border-t border-white/5 pt-4">
+            <button type="submit" className="btn btn-danger btn-sm">
+              Eliminar QR de NovaWallet
+            </button>
+          </form>
+        ) : null}
       </section>
 
       <section id="solicitudes" className="space-y-4">
