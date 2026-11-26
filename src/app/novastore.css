@@ -865,6 +865,17 @@
   flex: 1;
   min-width: 0;
 }
+/* Con seis apartados (EXTRA incluido) las etiquetas se ajustan sin desbordar. */
+.ns-nav .ns-nav-list .ns-nav-link {
+  font-size: 0.52rem;
+  padding-inline: 0.05rem;
+}
+.ns-nav .ns-nav-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .ns-nav-link {
   position: relative;
   display: flex;
