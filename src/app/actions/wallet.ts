@@ -6,10 +6,12 @@ import { requireAdmin, requireUser } from '@/lib/auth';
 import { centsFromInput } from '@/lib/format';
 import { saveImage, validateImage } from '@/lib/media';
 import {
+  clearWalletQrUrl,
   createWalletRecharge,
   createWalletWithdrawal,
   reviewWalletRequest,
   saveWalletConfig,
+  setWalletQrUrl,
 } from '@/lib/wallet';
 
 const WALLET_PATH = '/extra/novawallet';
@@ -26,7 +28,7 @@ export async function createWalletRechargeAction(formData: FormData) {
   const entry = formData.get('proof');
   const file = entry instanceof File && entry.size > 0 ? entry : null;
   if (!file) {
-    backToWallet(`error=${encodeURIComponent('Adjunta la imagen de tu comprobante de Yape.')}`);
+    backToWallet(`error=${encodeURIComponent('Adjunta la imagen de tu comprobante de pago.')}`);
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -116,6 +118,38 @@ export async function saveWalletConfigAction(formData: FormData) {
   revalidatePath(WALLET_PATH);
   redirect(
     `${ADMIN_PATH}?ok=${encodeURIComponent('Configuración de NovaWallet guardada.')}#config`,
+  );
+}
+
+/** El administrador sube o reemplaza el QR de pago de NovaWallet. */
+export async function saveWalletQrAction(formData: FormData) {
+  await requireAdmin(ADMIN_PATH);
+
+  const result = setWalletQrUrl(String(formData.get('wallet_qr_url') ?? ''));
+  if (!result.ok) {
+    redirect(`${ADMIN_PATH}?error=${encodeURIComponent(result.error)}#qr`);
+  }
+
+  revalidatePath(ADMIN_PATH);
+  revalidatePath(WALLET_PATH);
+  redirect(
+    `${ADMIN_PATH}?ok=${encodeURIComponent(
+      'QR de NovaWallet guardado. Los clientes ya lo ven al agregar dinero.',
+    )}#qr`,
+  );
+}
+
+/** El administrador elimina el QR de NovaWallet. */
+export async function clearWalletQrAction() {
+  await requireAdmin(ADMIN_PATH);
+
+  clearWalletQrUrl();
+  revalidatePath(ADMIN_PATH);
+  revalidatePath(WALLET_PATH);
+  redirect(
+    `${ADMIN_PATH}?ok=${encodeURIComponent(
+      'QR de NovaWallet eliminado. Los clientes verán que aún no está disponible.',
+    )}#qr`,
   );
 }
 

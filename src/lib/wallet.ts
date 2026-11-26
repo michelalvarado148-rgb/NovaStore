@@ -12,6 +12,7 @@
  * se puede usar para comprar productos de NOVASTORE.
  */
 import { getDb, nowIso } from './db';
+import { isAllowedPaymentQrUrl } from './payment-qr';
 
 export type WalletRequestKind = 'recarga' | 'retiro';
 export type WalletRequestStatus = 'pendiente' | 'aprobado' | 'rechazado';
@@ -32,6 +33,11 @@ export type WalletConfig = {
   /** Número de Yape del administrador al que los clientes envían el dinero. */
   yape_number: string;
   yape_holder: string;
+  /**
+   * URL del QR de pago que ven los clientes al agregar dinero. Se sube desde el
+   * panel con el módulo de medios (Supabase Storage o /api/media/<id>).
+   */
+  qr_url: string;
   /** Aviso libre que se muestra arriba de la alcancía (p. ej. comisiones). */
   notice: string;
   fee_enabled: boolean;
@@ -46,6 +52,7 @@ export type WalletConfig = {
 const DEFAULT_CONFIG: WalletConfig = {
   yape_number: '',
   yape_holder: '',
+  qr_url: '',
   notice: '',
   fee_enabled: false,
   fee_percent: 0,
@@ -162,6 +169,10 @@ export function getWalletConfig(): WalletConfig {
   return {
     yape_number: typeof raw.yape_number === 'string' ? raw.yape_number.trim().slice(0, 40) : '',
     yape_holder: typeof raw.yape_holder === 'string' ? raw.yape_holder.trim().slice(0, 80) : '',
+    qr_url:
+      typeof raw.qr_url === 'string' && isAllowedPaymentQrUrl(raw.qr_url)
+        ? raw.qr_url.trim()
+        : '',
     notice: typeof raw.notice === 'string' ? raw.notice.trim().slice(0, 600) : '',
     fee_enabled: raw.fee_enabled === true,
     fee_percent: clamp(toCents(raw.fee_percent, 0), 0, WALLET_MAX_PERCENT),
@@ -199,9 +210,13 @@ export function saveWalletConfig(input: {
   const minRecharge = Math.max(100, toCents(input.minRechargeCents, WALLET_DEFAULT_MIN_RECHARGE_CENTS));
   const minWithdraw = Math.max(100, toCents(input.minWithdrawCents, WALLET_DEFAULT_MIN_WITHDRAW_CENTS));
 
+  // El QR se administra en su propia sección: guardar el resto de ajustes no lo borra.
+  const current = getWalletConfig();
+
   const config: WalletConfig = {
     yape_number: input.yapeNumber.trim().slice(0, 40),
     yape_holder: input.yapeHolder.trim().slice(0, 80),
+    qr_url: current.qr_url,
     notice: input.notice.trim().slice(0, 600),
     fee_enabled: Boolean(input.feeEnabled),
     fee_percent: feePercent,
@@ -212,6 +227,36 @@ export function saveWalletConfig(input: {
 
   writeJson(CFG_KEY, config);
   return { ok: true, config };
+}
+
+export type WalletQrResult = { ok: true; url: string } | { ok: false; error: string };
+
+/**
+ * Guarda (o reemplaza) el QR de pago de la alcancía. Solo acepta imágenes
+ * subidas desde el panel: Supabase Storage o /api/media/<id>. Así una URL
+ * externa o un SVG no pueden ocupar el lugar del QR.
+ */
+export function setWalletQrUrl(raw: string): WalletQrResult {
+  const url = raw.trim();
+  if (!url) {
+    return { ok: false, error: 'Sube la imagen del QR antes de guardar.' };
+  }
+  if (!isAllowedPaymentQrUrl(url)) {
+    return {
+      ok: false,
+      error: 'La imagen del QR debe ser un archivo JPG, PNG o WEBP subido desde este panel.',
+    };
+  }
+
+  const config = getWalletConfig();
+  writeJson(CFG_KEY, { ...config, qr_url: url });
+  return { ok: true, url };
+}
+
+/** Quita el QR: los clientes vuelven a ver el aviso de que no está disponible. */
+export function clearWalletQrUrl(): void {
+  const config = getWalletConfig();
+  writeJson(CFG_KEY, { ...config, qr_url: '' });
 }
 
 /** Comisión que se descuenta del monto retirado (nunca supera el monto). */
@@ -388,7 +433,7 @@ export function createWalletRecharge(input: {
   const config = getWalletConfig();
   const amount = toCents(input.amountCents, 0);
 
-  if (amount <= 0) return { ok: false, error: 'Ingresa el monto que enviaste por Yape.' };
+  if (amount <= 0) return { ok: false, error: 'Ingresa el monto que pagaste con el QR.' };
   if (amount < config.min_recharge_cents) {
     return {
       ok: false,
@@ -436,7 +481,7 @@ export function createWalletRecharge(input: {
     amount_cents: amount,
     fee_cents: 0,
     net_cents: amount,
-    method: 'yape',
+    method: 'qr',
     reference,
     note,
     proof_url: input.proofUrl,
@@ -576,7 +621,9 @@ export function reviewWalletRequest(input: {
           userId: request.user_id,
           kind: 'ingreso',
           amountCents: request.amount_cents,
-          description: `Recarga aprobada por Yape · solicitud #${request.id}`,
+          description: `Recarga aprobada ${
+            request.method === 'qr' ? 'por QR' : 'por Yape'
+          } · solicitud #${request.id}`,
           requestId: request.id,
         });
       }
