@@ -1594,6 +1594,9 @@
   display: grid;
   gap: 0.6rem;
 }
+.nw-form-gap {
+  margin-top: 0.6rem;
+}
 .nw-field {
   display: block;
   min-width: 0;

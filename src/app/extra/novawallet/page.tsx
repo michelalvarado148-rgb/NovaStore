@@ -389,7 +389,7 @@ export default async function NovaWalletPage({
             )}
           </div>
 
-          <form action={createWalletRechargeAction} className="nw-form" style={{ marginTop: '0.6rem' }}>
+          <form action={createWalletRechargeAction} className="nw-form nw-form-gap">
             <label className="nw-field">
               <span className="nw-field-label">Monto pagado (S/)</span>
               <input
