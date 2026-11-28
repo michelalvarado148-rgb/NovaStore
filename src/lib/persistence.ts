@@ -219,12 +219,6 @@ const PARENT_FKS: Record<string, { column: string; parent: string }[]> = {
   offers: [{ column: 'product_id', parent: 'products' }],
 };
 
-function existingIds(db: Db, table: string): Set<string> {
-  const rows = db.prepare(`SELECT id FROM ${table}`).all() as { id: unknown }[];
-  return new Set(rows.map((row) => String(row.id)));
-}
-
-
 /** Quita de un lote las filas cuya clave foránea no existe en el destino. */
 export function dropOrphans(
   spec: TableSpec,
