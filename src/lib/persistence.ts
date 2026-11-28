@@ -27,7 +27,7 @@ interface TableSpec {
 }
 
 /** Orden padre → hijo: primero se restauran las tablas de las que dependen otras. */
-const TABLES: TableSpec[] = [
+export const TABLES: TableSpec[] = []
   { name: 'users', pk: 'id' },
   { name: 'categories', pk: 'id' },
   { name: 'products', pk: 'id' },
@@ -168,7 +168,7 @@ function clearUniqueConflicts(db: Db, spec: TableSpec, row: Row): void {
   }
 }
 
-function upsertLocal(db: Db, spec: TableSpec, rows: Row[]): number {
+export function upsertLocal(db: Db, spec: TableSpec, rows: Row[]): number {
   if (rows.length === 0) return 0;
   const columns = localColumns(db, spec.name);
   let applied = 0;
