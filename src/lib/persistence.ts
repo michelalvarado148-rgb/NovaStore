@@ -224,13 +224,19 @@ function existingIds(db: Db, table: string): Set<string> {
   return new Set(rows.map((row) => String(row.id)));
 }
 
-/** Quita de un lote las filas cuya clave foránea ya no existe en la tienda. */
-export function dropOrphans(db: Db, spec: TableSpec, rows: Row[]): Row[] {
+
+/** Quita de un lote las filas cuya clave foránea no existe en el destino. */
+export function dropOrphans(
+  spec: TableSpec,
+  rows: Row[],
+  parentIds: Record<string, Set<string>>,
+): Row[] {
   const relations = PARENT_FKS[spec.name];
   if (!relations) return rows;
   let kept = rows;
   for (const { column, parent } of relations) {
-    const ids = existingIds(db, parent);
+    const ids = parentIds[parent];
+    if (!ids) continue;
     kept = kept.filter((row) => {
       const value = row[column];
       if (value === null || value === undefined) return true;
@@ -240,16 +246,40 @@ export function dropOrphans(db: Db, spec: TableSpec, rows: Row[]): Row[] {
   return kept;
 }
 
+/** Ids ya presentes en Supabase para una tabla padre (null si no se pudo leer). */
+async function remoteIds(table: string): Promise<Set<string> | null> {
+  try {
+    const rows = await sbSelect<Row>(table, 'id');
+    return new Set(rows.map((row) => String(row.id)));
+  } catch (error) {
+    console.warn(
+      `[novastore] no se pudieron leer los ids de ${table} en Supabase: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+    return null;
+  }
+}
+
 /** Sube una tabla local completa y elimina en Supabase lo que ya no existe. */
 export async function pushTable(db: Db, spec: TableSpec): Promise<void> {
   const allRows = (db.prepare(`SELECT * FROM ${spec.name}`).all() as Row[])
     .map((row) => encodeRow(spec, row))
     .filter((row) => !isSkippedKey(spec, row[spec.pk]));
 
-  const rows = dropOrphans(db, spec, allRows);
+  // Las tablas hijas solo pueden subir filas cuyo padre ya está en Supabase:
+  // un producto local no replicado (por ejemplo del catálogo de ejemplo) haría
+  // fallar el lote completo con «violates foreign key constraint».
+  const parentIds: Record<string, Set<string>> = {};
+  for (const { parent } of PARENT_FKS[spec.name] ?? []) {
+    const ids = await remoteIds(parent);
+    if (ids) parentIds[parent] = ids;
+  }
+
+  const rows = dropOrphans(spec, allRows, parentIds);
   if (rows.length !== allRows.length) {
     console.warn(
-      `[novastore] ${allRows.length - rows.length} fila(s) de ${spec.name} no se replican: su producto ya no existe en la tienda.`,
+      `[novastore] ${allRows.length - rows.length} fila(s) de ${spec.name} no se replican: su producto todavía no existe en Supabase.`,
     );
   }
 
