@@ -83,19 +83,6 @@ export default function BottomNav({ cartCount = 0 }: { cartCount?: number }) {
         </svg>
       ),
     },
-    {
-      href: '/extra',
-      label: 'EXTRA',
-      matches: (path) => path.startsWith('/extra'),
-      icon: (
-        <svg viewBox="0 0 24 24" {...iconProps}>
-          <rect x="3" y="3" width="7.5" height="7.5" rx="1.8" />
-          <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.8" />
-          <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.8" />
-          <path d="M17.25 13.5v7.5M13.5 17.25h7.5" />
-        </svg>
-      ),
-    },
   ];
 
   return (

@@ -13,8 +13,6 @@ const NAV = [
   { href: '/admin/clientes', label: 'Clientes' },
   { href: '/admin/soporte', label: 'Soporte' },
   { href: '/admin/saldos', label: 'Saldos' },
-  { href: '/admin/wallet', label: 'NovaWallet' },
-  { href: '/admin/extra', label: 'Sección EXTRA' },
   { href: '/admin/pagos', label: 'Métodos de pago' },
   { href: '/admin/qr-pago', label: 'QR de pago' },
   { href: '/admin/notificaciones', label: 'Notificaciones' },
