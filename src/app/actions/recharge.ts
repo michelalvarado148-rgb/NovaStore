@@ -54,19 +54,29 @@ export async function createRechargeAction(formData: FormData) {
   );
 }
 
-/** El administrador aprueba o rechaza una solicitud de recarga. */
-export async function reviewRechargeAction(formData: FormData) {
+/**
+ * Revisa una solicitud de recarga.
+ *
+ * La acción llega como argumento (no como campo del formulario) porque el
+ * valor del botón pulsado no viaja en el FormData de una acción de servidor:
+ * enviarlo ahí hacía que el ID y la acción se leyeran vacíos.
+ */
+async function review(formData: FormData, action: 'aprobar' | 'rechazar') {
   const admin = await requireAdmin('/admin/recargas');
-  const id = Number(formData.get('id') ?? 0);
-  const action = String(formData.get('action') ?? '');
+  const rawId = String(formData.get('id') ?? '').trim();
+  const id = Number(rawId);
 
-  if (!id || (action !== 'aprobar' && action !== 'rechazar')) {
-    redirect(`/admin/recargas?error=${encodeURIComponent('Solicitud inválida.')}`);
+  if (!rawId || !Number.isInteger(id) || id <= 0) {
+    redirect(
+      `/admin/recargas?error=${encodeURIComponent(
+        'No pudimos identificar la solicitud. Actualiza la página e inténtalo nuevamente.',
+      )}`,
+    );
   }
 
   const result = reviewRechargeRequest({
     id,
-    action: action as 'aprobar' | 'rechazar',
+    action,
     adminId: admin.id,
     adminNote: String(formData.get('admin_note') ?? ''),
   });
@@ -83,8 +93,18 @@ export async function reviewRechargeAction(formData: FormData) {
   redirect(
     `/admin/recargas?ok=${encodeURIComponent(
       action === 'aprobar'
-        ? 'Recarga aprobada y saldo acreditado al cliente.'
-        : 'Solicitud rechazada. El cliente verá el motivo.',
+        ? `Solicitud #${id} aprobada: el saldo se acreditó al cliente una sola vez.`
+        : `Solicitud #${id} rechazada. No se acreditó saldo y el cliente verá el motivo.`,
     )}`,
   );
+}
+
+/** Botón Aprobar: acredita el saldo del cliente. */
+export async function approveRechargeAction(formData: FormData) {
+  await review(formData, 'aprobar');
+}
+
+/** Botón Rechazar: cambia el estado sin acreditar saldo. */
+export async function rejectRechargeAction(formData: FormData) {
+  await review(formData, 'rechazar');
 }

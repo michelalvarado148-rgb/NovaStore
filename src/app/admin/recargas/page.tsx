@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { requireAdmin } from '@/lib/auth';
 import { formatDateTime, formatPEN } from '@/lib/format';
 import { countPendingRecharges, getAllRecharges, type RechargeStatus } from '@/lib/recharge';
-import { reviewRechargeAction } from '@/app/actions/recharge';
+import { approveRechargeAction, rejectRechargeAction } from '@/app/actions/recharge';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Recargas | Panel' };
@@ -137,7 +137,7 @@ export default async function AdminRechargesPage({
                       </td>
                       <td>
                         {r.status === 'pendiente' ? (
-                          <form action={reviewRechargeAction} className="flex flex-col gap-2">
+                          <form className="flex flex-col gap-2">
                             <input type="hidden" name="id" value={r.id} />
                             <input
                               name="admin_note"
@@ -145,10 +145,18 @@ export default async function AdminRechargesPage({
                               className="input w-full text-xs"
                             />
                             <div className="flex gap-2">
-                              <button name="action" value="aprobar" className="btn btn-success btn-sm">
+                              <button
+                                type="submit"
+                                formAction={approveRechargeAction}
+                                className="btn btn-success btn-sm"
+                              >
                                 Aprobar
                               </button>
-                              <button name="action" value="rechazar" className="btn btn-danger btn-sm">
+                              <button
+                                type="submit"
+                                formAction={rejectRechargeAction}
+                                className="btn btn-danger btn-sm"
+                              >
                                 Rechazar
                               </button>
                             </div>
