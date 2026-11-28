@@ -126,6 +126,48 @@ function localColumns(db: Db, table: string): string[] {
 /* Restauración al arrancar                                           */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Índices únicos que no son la clave primaria (categories.slug, categories.name,
+ * products.slug, users.email, carts.token…). Al restaurar, la fila de Supabase
+ * manda: si la base local tiene otra fila con el mismo valor único pero distinto
+ * id (por ejemplo las categorías sembradas al crear el contenedor), primero se
+ * retira la copia local; si no, el INSERT falla y la tabla entera no se restaura.
+ */
+const uniqueIndexCache = new Map<string, string[][]>();
+
+function uniqueIndexes(db: Db, spec: TableSpec): string[][] {
+  const cached = uniqueIndexCache.get(spec.name);
+  if (cached) return cached;
+  const indexes = db
+    .prepare(`PRAGMA index_list(${spec.name})`)
+    .all() as { name: string; unique: number }[];
+  const found: string[][] = [];
+  for (const index of indexes) {
+    if (!index.unique) continue;
+    const columns = (
+      db.prepare(`PRAGMA index_info(${index.name})`).all() as { name: string }[]
+    ).map((column) => column.name);
+    if (columns.length === 0) continue;
+    if (columns.length === 1 && columns[0] === spec.pk) continue;
+    found.push(columns);
+  }
+  uniqueIndexCache.set(spec.name, found);
+  return found;
+}
+
+function clearUniqueConflicts(db: Db, spec: TableSpec, row: Row): void {
+  for (const columns of uniqueIndexes(db, spec)) {
+    if (columns.includes(spec.pk)) continue;
+    const values = columns.map((column) => row[column]);
+    if (values.some((value) => value === null || value === undefined)) continue;
+    const where = columns.map((column) => `${column} = ?`).join(' AND ');
+    db.prepare(`DELETE FROM ${spec.name} WHERE ${where} AND ${spec.pk} <> ?`).run(
+      ...(values as never[]),
+      row[spec.pk] as never,
+    );
+  }
+}
+
 function upsertLocal(db: Db, spec: TableSpec, rows: Row[]): number {
   if (rows.length === 0) return 0;
   const columns = localColumns(db, spec.name);
@@ -140,8 +182,17 @@ function upsertLocal(db: Db, spec: TableSpec, rows: Row[]): number {
       const sql =
         `INSERT INTO ${spec.name} (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')}) ` +
         `ON CONFLICT(${spec.pk}) DO ${updates.length ? `UPDATE SET ${updates.join(', ')}` : 'NOTHING'}`;
-      db.prepare(sql).run(...keys.map((key) => row[key] as never));
-      applied += 1;
+      try {
+        clearUniqueConflicts(db, spec, row);
+        db.prepare(sql).run(...keys.map((key) => row[key] as never));
+        applied += 1;
+      } catch (error) {
+        // Una sola fila problemática no debe impedir restaurar el resto.
+        console.warn(
+          `[novastore] no se pudo restaurar una fila de ${spec.name}:`,
+          (error as Error).message,
+        );
+      }
     }
   });
 

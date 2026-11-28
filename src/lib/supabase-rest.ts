@@ -43,7 +43,7 @@ function buildPool(relaxed: boolean): Pool {
     ssl: { rejectUnauthorized: !relaxed },
     max: 4,
     idleTimeoutMillis: 30_000,
-    connectionTimeoutMillis: 12_000,
+    connectionTimeoutMillis: 6_000,
     application_name: 'novastore',
   });
   created.on('error', (error) => {

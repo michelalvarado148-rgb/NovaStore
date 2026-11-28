@@ -318,12 +318,28 @@ export function getDb(): Db {
 }
 
 /**
- * Prepara la base y espera a que termine la restauración desde Supabase.
- * Se llama desde src/instrumentation.ts al arrancar el servidor.
+ * Segundos como máximo que el arranque espera la restauración de Supabase.
+ * Si la conexión tarda más (red lenta, reintento TLS), el servidor empieza a
+ * responder igualmente y la restauración termina en segundo plano: bloquear el
+ * arranque hacía fallar el chequeo de salud del contenedor y devolvía 502.
+ */
+const STARTUP_WAIT_MS = 4000;
+
+/**
+ * Prepara la base y espera, con un tope, a que termine la restauración desde
+ * Supabase. Se llama desde src/instrumentation.ts al arrancar el servidor.
  */
 export async function warmPersistence(): Promise<void> {
   getDb();
-  await persistenceReady();
+  const restore = persistenceReady().catch((error: unknown) => {
+    console.warn('[novastore] la restauración inicial seguirá en segundo plano:', error);
+  });
+  await Promise.race([
+    restore,
+    new Promise<void>((resolve) => {
+      setTimeout(resolve, STARTUP_WAIT_MS).unref?.();
+    }),
+  ]);
 }
 
 /* ------------------------------------------------------------------ */
