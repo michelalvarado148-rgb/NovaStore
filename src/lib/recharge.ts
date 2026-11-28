@@ -200,9 +200,20 @@ export function reviewRechargeRequest(input: {
       .get(input.id) as
       | { id: number; user_id: number; amount_cents: number; status: RechargeStatus }
       | undefined;
-    if (!row) return { ok: false, error: 'Solicitud no encontrada.' };
+    if (!row) {
+      return {
+        ok: false,
+        error: 'La solicitud ya no existe. Actualiza la página e inténtalo nuevamente.',
+      };
+    }
     if (row.status !== 'pendiente') {
-      return { ok: false, error: 'Esta solicitud ya fue revisada.' };
+      return {
+        ok: false,
+        error:
+          row.status === 'aprobado'
+            ? 'Esta solicitud ya fue aprobada: el saldo no se acredita dos veces.'
+            : 'Esta solicitud ya fue rechazada.',
+      };
     }
 
     const status: RechargeStatus = input.action === 'aprobar' ? 'aprobado' : 'rechazado';
@@ -215,7 +226,10 @@ export function reviewRechargeRequest(input: {
       .run(status, adminNote, input.adminId, nowIso(), input.id);
 
     if (info.changes === 0) {
-      return { ok: false, error: 'Esta solicitud ya fue revisada.' };
+      return {
+        ok: false,
+        error: 'Esta solicitud acaba de revisarse en otra pestaña. No se acreditó saldo.',
+      };
     }
 
     if (status === 'aprobado') {
