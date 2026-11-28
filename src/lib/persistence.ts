@@ -27,7 +27,7 @@ interface TableSpec {
 }
 
 /** Orden padre → hijo: primero se restauran las tablas de las que dependen otras. */
-export const TABLES: TableSpec[] = []
+export const TABLES: TableSpec[] = [
   { name: 'users', pk: 'id' },
   { name: 'categories', pk: 'id' },
   { name: 'products', pk: 'id' },
