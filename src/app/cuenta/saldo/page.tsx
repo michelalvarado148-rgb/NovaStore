@@ -6,8 +6,7 @@ import {
   getMyRecharges,
   getRechargeMethods,
 } from '@/lib/recharge';
-import { RechargeAmountField } from '@/components/RechargeAmountField';
-import { createRechargeAction } from '@/app/actions/recharge';
+import { RechargeFlow } from '@/components/RechargeFlow';
 import { getPaymentQrUrl } from '@/lib/payment-qr';
 import AutoRefresh from '@/components/AutoRefresh';
 
@@ -44,24 +43,22 @@ export default async function BalancePage({
     <div className="space-y-5">
       {/* El QR se actualiza solo cuando el administrador sube uno nuevo. */}
       <AutoRefresh intervalMs={30000} />
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="panel border-purple-400/40 p-5">
-          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-purple-300">
-            Saldo disponible
-          </p>
-          <p className="mt-1 text-3xl font-black text-white">{formatPEN(user.balance_cents)}</p>
+
+      <div className="ns-bal-grid">
+        <div className="ns-bal-card is-primary">
+          <span className="ns-bal-label">Saldo disponible</span>
+          <strong className="ns-bal-value">{formatPEN(user.balance_cents)}</strong>
+          <span className="ns-bal-foot">Listo para usar en tus compras de NovaStore</span>
         </div>
-        <div className="panel p-5">
-          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-emerald-300">
-            Total acreditado
-          </p>
-          <p className="mt-1 text-2xl font-black text-emerald-300">{formatPEN(credited)}</p>
+        <div className="ns-bal-card">
+          <span className="ns-bal-label is-green">Total acreditado</span>
+          <strong className="ns-bal-value">{formatPEN(credited)}</strong>
+          <span className="ns-bal-foot">Recargas aprobadas</span>
         </div>
-        <div className="panel p-5">
-          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-red-300">
-            Total usado
-          </p>
-          <p className="mt-1 text-2xl font-black text-red-300">{formatPEN(Math.abs(debited))}</p>
+        <div className="ns-bal-card">
+          <span className="ns-bal-label is-red">Total usado</span>
+          <strong className="ns-bal-value">{formatPEN(Math.abs(debited))}</strong>
+          <span className="ns-bal-foot">Compras pagadas con saldo</span>
         </div>
       </div>
 
@@ -76,129 +73,12 @@ export default async function BalancePage({
         </p>
       ) : null}
 
-      <section id="recarga" className="panel overflow-hidden">
-        <div className="border-b border-white/5 p-5">
-          <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-purple-200">
-            Añadir saldo
-          </h2>
-          <p className="muted mt-1 text-xs">
-            Realiza el pago por Yape, Plin o transferencia y envía tu comprobante. El saldo se
-            acredita cuando el administrador verifica el pago.
-          </p>
-        </div>
-
-        <div className="space-y-5 p-5">
-          <div className="rounded-2xl border border-purple-500/25 bg-slate-900/60 p-4">
-            {qrUrl ? (
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="rounded-2xl bg-white p-2.5">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={qrUrl}
-                    alt="Código QR para pagar tu recarga de saldo"
-                    width={160}
-                    height={160}
-                    className="h-40 w-40 object-contain"
-                  />
-                </div>
-                <div className="min-w-[12rem] flex-1">
-                  <p className="text-sm font-bold text-white">Escanea el QR para pagar</p>
-                  <p className="muted mt-1 text-xs">
-                    Abre Yape, Plin o la app de tu banco, escanea este código y paga el monto que
-                    ingresaste abajo. Después adjunta tu comprobante para que el administrador lo
-                    verifique.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <p className="text-sm font-bold text-white">
-                  El QR de pago todavía no está disponible
-                </p>
-                <p className="muted mt-1 text-xs">
-                  El administrador aún no configuró su QR. Puedes pagar con los datos de los métodos
-                  de abajo y adjuntar tu comprobante.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {methods.length > 0 ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {methods.map((m) => (
-                <div key={m.code} className="rounded-xl border border-purple-500/20 bg-slate-900/60 p-3">
-                  <p className="text-sm font-semibold text-white">{m.name}</p>
-                  <p className="mt-0.5 text-xs text-slate-300">{m.account_info}</p>
-                  {m.instructions ? (
-                    <p className="mt-1 text-[0.7rem] text-slate-400">{m.instructions}</p>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="muted text-sm">
-              El administrador aún no habilitó métodos de pago para recargas. Escríbenos por Soporte.
-            </p>
-          )}
-
-          {pending > 0 ? (
-            <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs text-amber-200">
-              Tienes {pending} solicitud(es) en revisión. Te avisaremos cuando el administrador la
-              verifique.
-            </p>
-          ) : null}
-
-          <form action={createRechargeAction} className="grid gap-3 sm:grid-cols-2">
-            <RechargeAmountField minAmount={RECHARGE_MIN_CENTS / 100} />
-            <label className="block text-sm text-slate-300">
-              Método de pago
-              <select name="method" required className="input mt-1.5 w-full">
-                <option value="">Selecciona un método</option>
-                {methods.map((m) => (
-                  <option key={m.code} value={m.code}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-sm text-slate-300">
-              N° de operación (opcional)
-              <input
-                type="text"
-                name="reference"
-                maxLength={60}
-                placeholder="Ej. 0123456"
-                className="input mt-1.5 w-full"
-              />
-            </label>
-            <label className="block text-sm text-slate-300">
-              Comprobante (imagen o PDF)
-              <input
-                type="file"
-                name="proof"
-                required
-                accept="image/jpeg,image/png,image/webp,application/pdf"
-                className="input mt-1.5 w-full"
-              />
-            </label>
-            <label className="block text-sm text-slate-300 sm:col-span-2">
-              Nota para el administrador (opcional)
-              <textarea
-                name="note"
-                rows={2}
-                maxLength={500}
-                placeholder="Ej. Pagué con Yape a nombre de…"
-                className="input mt-1.5 w-full resize-y"
-              />
-            </label>
-            <div className="sm:col-span-2">
-              <button type="submit" className="btn btn-primary w-full sm:w-auto">
-                Enviar solicitud de recarga
-              </button>
-            </div>
-          </form>
-        </div>
-      </section>
+      <RechargeFlow
+        minAmount={RECHARGE_MIN_CENTS / 100}
+        qrUrl={qrUrl}
+        methods={methods}
+        pending={pending}
+      />
 
       <section className="panel overflow-hidden">
         <div className="border-b border-white/5 p-5">
