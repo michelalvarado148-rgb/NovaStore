@@ -12,6 +12,7 @@
     "smoke": "node scripts/smoke-test.mjs",
     "test:checkout": "tsx scripts/checkout-regression.ts",
     "test:saldo": "tsx scripts/balance-checkout-regression.ts",
+    "test:recargas": "tsx scripts/recharge-review-regression.ts",
     "test:admin": "tsx scripts/admin-regression.ts",
     "test:security": "tsx scripts/security-regression.ts",
     "test:bootstrap": "tsx scripts/admin-bootstrap-regression.ts",
