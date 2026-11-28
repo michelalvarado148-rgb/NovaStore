@@ -109,7 +109,9 @@ async function main(): Promise<void> {
     { id: 1, product_id: validProduct?.id ?? 0, name: 'variante válida' },
     { id: 2, product_id: 999_999, name: 'variante huérfana' },
   ];
-  const kept = dropOrphans(db, variants, batch);
+  const kept = dropOrphans(variants, batch, {
+    products: new Set([String(validProduct?.id ?? 0)]),
+  });
   check('se omite la variante cuyo producto ya no existe', kept.length === 1 && kept[0].id === 1);
   check('se conserva la variante válida', kept[0]?.product_id === validProduct?.id);
 
