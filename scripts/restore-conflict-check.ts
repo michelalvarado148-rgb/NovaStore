@@ -28,7 +28,7 @@ async function main(): Promise<void> {
   }
 
   const { getDb } = await import('../src/lib/db');
-  const { TABLES, upsertLocal } = await import('../src/lib/persistence');
+  const { TABLES, upsertLocal, dropOrphans } = await import('../src/lib/persistence');
 
   const db = getDb();
   const categories = TABLES.find((spec) => spec.name === 'categories');
@@ -99,6 +99,19 @@ async function main(): Promise<void> {
   const productsAgain = db.prepare('SELECT COUNT(*) AS n FROM products').get() as { n: number };
   check('restaurar dos veces no duplica categorías', categoriesAgain.n === remoteCategories.length);
   check('restaurar dos veces no duplica productos', productsAgain.n === remoteProducts.length);
+
+  /* ---------- Filas huérfanas: no rompen la réplica de variantes/ofertas ---------- */
+  const variants = TABLES.find((spec) => spec.name === 'product_variants');
+  if (!variants) throw new Error('No se encontró la tabla product_variants');
+  const validProduct = db.prepare('SELECT id FROM products LIMIT 1').get() as { id: number } | undefined;
+  check('hay un producto válido de referencia', Boolean(validProduct));
+  const batch = [
+    { id: 1, product_id: validProduct?.id ?? 0, name: 'variante válida' },
+    { id: 2, product_id: 999_999, name: 'variante huérfana' },
+  ];
+  const kept = dropOrphans(db, variants, batch);
+  check('se omite la variante cuyo producto ya no existe', kept.length === 1 && kept[0].id === 1);
+  check('se conserva la variante válida', kept[0]?.product_id === validProduct?.id);
 
   console.log(`\n${failures === 0 ? 'TODO OK' : `${failures} fallo(s)`}`);
   if (failures > 0) process.exitCode = 1;

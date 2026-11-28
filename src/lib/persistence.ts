@@ -208,18 +208,57 @@ export function upsertLocal(db: Db, spec: TableSpec, rows: Row[]): number {
   return applied;
 }
 
+/**
+ * Tablas hijas que apuntan a `products`: al replicarlas hay que omitir las filas
+ * huérfanas (las que dejó el catálogo de ejemplo al sustituirse por los productos
+ * reales de Supabase); si no, PostgreSQL rechaza todo el lote con
+ * «violates foreign key constraint» y la tabla nunca queda guardada.
+ */
+const PARENT_FKS: Record<string, { column: string; parent: string }[]> = {
+  product_variants: [{ column: 'product_id', parent: 'products' }],
+  offers: [{ column: 'product_id', parent: 'products' }],
+};
+
+function existingIds(db: Db, table: string): Set<string> {
+  const rows = db.prepare(`SELECT id FROM ${table}`).all() as { id: unknown }[];
+  return new Set(rows.map((row) => String(row.id)));
+}
+
+/** Quita de un lote las filas cuya clave foránea ya no existe en la tienda. */
+export function dropOrphans(db: Db, spec: TableSpec, rows: Row[]): Row[] {
+  const relations = PARENT_FKS[spec.name];
+  if (!relations) return rows;
+  let kept = rows;
+  for (const { column, parent } of relations) {
+    const ids = existingIds(db, parent);
+    kept = kept.filter((row) => {
+      const value = row[column];
+      if (value === null || value === undefined) return true;
+      return ids.has(String(value));
+    });
+  }
+  return kept;
+}
+
 /** Sube una tabla local completa y elimina en Supabase lo que ya no existe. */
 export async function pushTable(db: Db, spec: TableSpec): Promise<void> {
-  const rows = (db.prepare(`SELECT * FROM ${spec.name}`).all() as Row[])
+  const allRows = (db.prepare(`SELECT * FROM ${spec.name}`).all() as Row[])
     .map((row) => encodeRow(spec, row))
     .filter((row) => !isSkippedKey(spec, row[spec.pk]));
+
+  const rows = dropOrphans(db, spec, allRows);
+  if (rows.length !== allRows.length) {
+    console.warn(
+      `[novastore] ${allRows.length - rows.length} fila(s) de ${spec.name} no se replican: su producto ya no existe en la tienda.`,
+    );
+  }
 
   for (let index = 0; index < rows.length; index += CHUNK) {
     await sbUpsert(spec.name, rows.slice(index, index + CHUNK), spec.pk);
   }
 
   const remote = await sbSelect<Row>(spec.name, spec.pk);
-  const localKeys = new Set(rows.map((row) => String(row[spec.pk])));
+  const localKeys = new Set(allRows.map((row) => String(row[spec.pk])));
   const stale = remote
     .map((row) => row[spec.pk] as string | number)
     .filter((value) => !localKeys.has(String(value)))
